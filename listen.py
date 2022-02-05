@@ -34,7 +34,8 @@ if __name__ == '__main__':
             sys.exit()
         except Exception as e:
             print(e)
-            print(f'Retry in {RETRY_TIME} seconds')
+            print(f'Retry in {RETRY_TIME} seconds ...')
+            print('Press Ctrl + C to exit')
             time.sleep(RETRY_TIME)
 
 
