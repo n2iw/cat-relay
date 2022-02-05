@@ -35,14 +35,12 @@ class HamLibClient:
         message = f'f\n'
         self.sock.send(bytes(message, 'utf-8'))
         message = str(self.sock.recv(BUFFER_SIZE))
-        freq = parse_frequency(message)
-        print(freq)
-        return freq
+        return parse_frequency(message)
 
     def close(self):
         if self.sock:
             self.sock.close()
             self.sock = None
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
