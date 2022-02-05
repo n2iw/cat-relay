@@ -33,6 +33,13 @@ class RadioInfo:
         'FocusRadioNr'
     ]
 
+    def get_frequency(self):
+        '''
+        :return: frequency in Hz
+        '''
+        if self.data and 'Freq' in self.data:
+            return int(self.data['Freq']) * 10
+
     def __init__(self, root):
         if root.tag == self.TAG_NAME:
             self.data = {}

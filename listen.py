@@ -24,8 +24,8 @@ if __name__ == '__main__':
                     data, addr = sock.recvfrom(1024)  # buffer size is 1024 bytes
                     print(f'received message from {addr}: {str(data)}')
                     info = get_radio_info(data)
-                    if info and info.data:
-                        freq = int(info.data['Freq']) * 10
+                    if info:
+                        freq = info.get_frequency()
                         print(f'Frequency: {freq}')
                         if client is not None:
                             client.set_freq(freq)
