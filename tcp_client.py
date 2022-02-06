@@ -14,6 +14,8 @@ class TCPClient:
     def __enter__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.ip, self.port))
+        self.last_freq = self.get_freq()
+        self.last_mode = self.get_mode()
         return self
 
     def send(self, message):
