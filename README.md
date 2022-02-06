@@ -1,7 +1,7 @@
 #Cat-relay
 ## About
 Cat-relay is a Ham/SWL utility, written in Python3. It synchronizes frequency between SDR++ and RUMlogNG logging software, 
-so SDR++ can act as a panadapter for your radio.
+so SDR++ can act as a band scope/panadapter for your radio.
 
 ## Supported platforms and software
 Although Cat-relay is platform independent, the main use case is running SDR++ with RUMlogNG on MacOS. 
@@ -9,8 +9,7 @@ It may work with other SDR software that are compatible with Hamlib/Rigctl, or o
 commands. At this moment, no software other than SDR++ and RUMlogNG is tested, including Dxlab Commander. 
 
 ##  How is works
-Cat-relay reads frequencies from SDR++ and RUMlogNG every 50ms (configurable), and synchronizes them if either of them changes.
-It also synchronizes mode from SDR++ to RUMlogNG. (I haven't found a way to read mode from RUMlogNG yet).
+Cat-relay reads frequencies and modes from SDR++ and RUMlogNG every 50ms (configurable), and synchronizes them if either of them changes.
 
 ## Prerequisites
 - CAT control needs to be correctly configured in RUMlogNG
