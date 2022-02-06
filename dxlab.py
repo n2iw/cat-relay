@@ -48,4 +48,5 @@ class Commander(TCPClient):
         else:
             parameters = format_command('xcvrfreq', freq)
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
+        self.last_freq = freq
         self.send(cmd)

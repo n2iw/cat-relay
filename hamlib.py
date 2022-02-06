@@ -41,9 +41,9 @@ class HamLibClient(TCPClient):
         self.send(message)
         result = self.receive()
         if parse_result(result):
-            return True
+            self.last_freq = freq
         else:
-            return False
+            print(f'Set Hamlib to {freq}Hz failed!')
 
     def get_freq(self):
         message = f'f\n'

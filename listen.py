@@ -46,23 +46,19 @@ if __name__ == '__main__':
         try:
             with HamLibClient(params[HAMLIB_IP], params[HAMLIB_PORT]) as hamlib:
                 with Commander(params[CMDR_IP], params[CMDR_PORT]) as cmdr:
-                    current_freq = None
-                    current_mode = None
                     while True:
                         cmdr_freq = cmdr.get_freq()
                         cmdr_mode = cmdr.get_mode()
+                        if (cmdr_freq != hamlib.get_last_freq() and isinstance(cmdr_freq, int)) or \
+                           (cmdr_mode != hamlib.get_last_mode() and isinstance(cmdr_mode, str)):
+                            hamlib.set_freq_mode(cmdr_freq, cmdr_mode)
+                            continue
+
                         hl_freq = hamlib.get_freq()
                         hl_mode = hamlib.get_mode()
-                        if (cmdr_freq != current_freq and isinstance(cmdr_freq, int)) or \
-                           (cmdr_mode != current_mode and isinstance(cmdr_mode, str)) :
-                            current_freq = cmdr_freq
-                            current_mode = cmdr_mode
-                            hamlib.set_freq_mode(current_freq, current_mode)
-                        elif (hl_freq != current_freq and isinstance(hl_freq, int)) or \
-                            (hl_mode != current_mode and isinstance(hl_mode, str)):
-                            current_freq = hl_freq
-                            current_mode = hl_mode
-                            cmdr.set_freq_mode(current_freq, current_mode)
+                        if (hl_freq != cmdr.get_last_freq() and isinstance(hl_freq, int)) or \
+                            (hl_mode != cmdr.get_last_mode() and isinstance(hl_mode, str)):
+                            cmdr.set_freq_mode(hl_freq, hl_mode)
                         time.sleep(params[SYNC_INTERVAL])
         except KeyboardInterrupt as ke:
             print("\nTerminated by user.")
