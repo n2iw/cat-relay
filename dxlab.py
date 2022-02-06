@@ -1,6 +1,6 @@
 import re
 
-from tcp_client import TCPClient
+from cat_client import CATClient
 
 
 def format_command(field, children = None):
@@ -29,7 +29,22 @@ def parse_mode(message):
         return mode
 
 
-class Commander(TCPClient):
+VALID_MODES = [
+    'AM',
+    'CW',
+    'CW-R',
+    'DATA-L',
+    'DATA-U',
+    'FM',
+    'LSB',
+    'RTTY',
+    'RTTY-R',
+    'USB',
+    'WBFM'
+]
+
+
+class Commander(CATClient):
     def get_freq(self):
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         self.send(cmd)
@@ -39,7 +54,7 @@ class Commander(TCPClient):
     def get_mode(self):
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         self.send(cmd)
-        self.last_mode = parse_mode(self.receive())
+        self.last_mode = self.map_mode(parse_mode(self.receive()))
         return self.last_mode
 
     def set_freq_mode(self, freq, mode=None):

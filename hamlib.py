@@ -1,5 +1,5 @@
 import re
-from tcp_client import TCPClient
+from cat_client import CATClient
 
 
 def parse_frequency(message):
@@ -25,7 +25,33 @@ def parse_result(message):
         return succeeded == '0'
 
 
-class HamLibClient(TCPClient):
+VALID_MODES = [
+    'AM',
+    'AMS',
+    'CW',
+    'CWR',
+    'DSB'
+    'ECSSLSB',
+    'ECSSUSB',
+    'FA',
+    'FM',
+    'LSB',
+    'PKTFM',
+    'PKTLSB',
+    'PKTUSB',
+    'RTTY',
+    'RTTYR',
+    'SAH',
+    'SAL',
+    'SAM',
+    'USB',
+    'WFM',
+]
+
+
+
+
+class HamLibClient(CATClient):
 
     def set_freq_mode(self, freq, mode=None):
         if self.last_mode != mode and mode is not None:
@@ -54,5 +80,5 @@ class HamLibClient(TCPClient):
     def get_mode(self):
         message = f'm\n'
         self.send(message)
-        self.last_mode = parse_mode(self.receive())
+        self.last_mode = self.map_mode(parse_mode(self.receive()))
         return self.last_mode

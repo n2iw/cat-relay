@@ -11,6 +11,17 @@ commands. At this moment, no software other than SDR++ and RUMlogNG is tested, i
 ##  How is works
 Cat-relay reads frequencies and modes from SDR++ and RUMlogNG every 50ms (configurable), and synchronizes them if either of them changes.
 
+## Mode mapping
+Most common modes are supported in both SDR++ and RUMlogNG therefore should work properly, e.g., CW, USB, LSB, AM and FM. 
+Some modes are only supported in one or the other. For example, my radio (TS-590SG) reports RTTY mode, which SDR++ 
+doesn't support. Following mapping and limitation is implemented. It suits my needs. I believe it will also be acceptable 
+for other users.
+
+- RTTY mode (from radio) will be mapped to USB mode
+- WFM mode (from SDR++) will be mapped to FM mode
+- RAW mode (from SDR++) will not be supported
+- DSB mode (from SDR++) will not be supported
+
 ## Prerequisites
 - CAT control needs to be correctly configured in RUMlogNG
 - "DxLab Suite Commander" needs to be set to "Start" in RUMLogNG
