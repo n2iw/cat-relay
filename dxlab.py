@@ -14,12 +14,20 @@ def format_command(field, children = None):
     field = str(field)
     return f'<{field}:{children_len}>{children}'
 
+
 def parse_frequency(message):
     result = re.match(r"b\'<CmdFreq:\d+>(\d+.\d+)\'", message)
     if result:
         freq_str = result.group(1)
         if freq_str:
             return int(float(freq_str) * 1000)
+
+
+def parse_mode(message):
+    result = re.match(r"b\'<CmdMode:\d+>(\w+)\'", message)
+    if result:
+        mode = result.group(1)
+        return mode
 
 class Commander:
     def __init__(self, ip, port):
@@ -38,6 +46,13 @@ class Commander:
         message = str(self.sock.recv(BUFFER_SIZE))
         freq = parse_frequency(message)
         return freq
+
+    def get_mode(self):
+        cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
+        self.sock.send(bytes(cmd, 'utf-8'))
+        message = str(self.sock.recv(BUFFER_SIZE))
+        mode = parse_mode(message)
+        return mode
 
     def set_freq(self, freq, mode=None):
         if self.current_mode != mode and mode is not None:
