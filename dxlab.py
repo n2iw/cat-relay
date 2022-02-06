@@ -33,12 +33,14 @@ class Commander(TCPClient):
     def get_freq(self):
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         self.send(cmd)
-        return parse_frequency(self.receive())
+        self.last_freq = parse_frequency(self.receive())
+        return self.last_freq
 
     def get_mode(self):
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         self.send(cmd)
-        return parse_mode(self.receive())
+        self.last_mode = parse_mode(self.receive())
+        return self.last_mode
 
     def set_freq_mode(self, freq, mode=None):
         if self.last_mode != mode and mode is not None:
