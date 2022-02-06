@@ -24,16 +24,20 @@ if __name__ == '__main__':
         try:
             with HamLibClient(HAMLIB_IP, HAMLIB_PORT) as hamlib:
                 with Commander(CMDR_IP, CMDR_PORT) as cmdr:
-                    new_freq = None
+                    current_freq = None
+                    current_mode = None
                     while True:
                         cmdr_freq = cmdr.get_freq()
                         hl_freq = hamlib.get_freq()
-                        if cmdr_freq != new_freq and isinstance(cmdr_freq, int):
-                            new_freq = cmdr_freq
-                            hamlib.set_freq(new_freq)
-                        elif hl_freq != new_freq and isinstance(hl_freq, int):
-                            new_freq = hl_freq
-                            cmdr.set_freq(new_freq)
+                        hl_mode = hamlib.get_mode()
+                        if cmdr_freq != current_freq and isinstance(cmdr_freq, int):
+                            current_freq = cmdr_freq
+                            hamlib.set_freq(current_freq)
+                        elif (hl_freq != current_freq and isinstance(hl_freq, int)) or \
+                            (hl_mode != current_mode and isinstance(hl_mode, str)):
+                            current_freq = hl_freq
+                            current_mode = hl_mode
+                            cmdr.set_freq(current_freq, hl_mode)
                         time.sleep(SYNC_INTERVAL)
         except KeyboardInterrupt as ke:
             print("\nTerminated by user.")

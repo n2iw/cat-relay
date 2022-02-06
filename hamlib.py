@@ -11,6 +11,12 @@ def parse_frequency(message):
         if freq_str:
             return int(freq_str)
 
+def parse_mode(message):
+    result = re.match(r"b\'(\w+)\\", message)
+    if result:
+        freq_str = result.group(1)
+        if freq_str:
+            return freq_str
 
 class HamLibClient:
     def __init__(self, ip, port):
@@ -36,6 +42,12 @@ class HamLibClient:
         self.sock.send(bytes(message, 'utf-8'))
         message = str(self.sock.recv(BUFFER_SIZE))
         return parse_frequency(message)
+
+    def get_mode(self):
+        message = f'm\n'
+        self.sock.send(bytes(message, 'utf-8'))
+        message = str(self.sock.recv(BUFFER_SIZE))
+        return parse_mode(message)
 
     def close(self):
         if self.sock:

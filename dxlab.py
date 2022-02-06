@@ -25,6 +25,7 @@ class Commander:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
+        self.current_mode = ''
 
     def __enter__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,11 +36,17 @@ class Commander:
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         self.sock.send(bytes(cmd, 'utf-8'))
         message = str(self.sock.recv(BUFFER_SIZE))
-        return parse_frequency(message)
+        freq = parse_frequency(message)
+        return freq
 
-    def set_freq(self, freq):
-        cmd = format_command('command', 'CmdSetFreq') + \
-              format_command('parameters',format_command('xcvrfreq', freq))
+    def set_freq(self, freq, mode=None):
+        if self.current_mode != mode and mode is not None:
+            self.current_mode = mode
+            parameters = format_command('xcvrfreq', freq) + format_command('xcvrmode', mode)
+            cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
+        else:
+            parameters = format_command('xcvrfreq', freq)
+            cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         self.sock.send(bytes(cmd, 'utf-8'))
 
     def close(self):
