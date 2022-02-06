@@ -1,11 +1,9 @@
 import re
-import socket
-
-BUFFER_SIZE = 1024
+from tcp_client import TCPClient
 
 
 def parse_frequency(message):
-    result = re.match(r"b\'(\d+)\\n\'", str(message))
+    result = re.match(r"(\d+)\\n", str(message))
     if result:
         freq_str = result.group(1)
         if freq_str:
@@ -13,7 +11,7 @@ def parse_frequency(message):
 
 
 def parse_mode(message):
-    result = re.match(r"b\'(\w+)\\", str(message))
+    result = re.match(r"(\w+)\\", str(message))
     if result:
         freq_str = result.group(1)
         if freq_str:
@@ -21,28 +19,13 @@ def parse_mode(message):
 
 
 def parse_result(message):
-    result = re.match(r"b\'RPRT +(\d)\\n\'", str(message))
+    result = re.match(r"RPRT +(\d)\\n", str(message))
     if result:
         succeeded = result.group(1)
         return succeeded == '0'
 
 
-class HamLibClient:
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self.current_mode = ''
-
-    def __enter__(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.ip, self.port))
-        return self
-
-    def send(self, message):
-        self.sock.send(bytes(message, 'utf-8'))
-
-    def receive(self):
-        return str(self.sock.recv(BUFFER_SIZE))
+class HamLibClient(TCPClient):
 
     def set_freq(self, freq, mode=None):
         if self.current_mode != mode and mode is not None:
@@ -71,11 +54,3 @@ class HamLibClient:
         message = f'm\n'
         self.send(message)
         return parse_mode(self.receive())
-
-    def close(self):
-        if self.sock:
-            self.sock.close()
-            self.sock = None
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()

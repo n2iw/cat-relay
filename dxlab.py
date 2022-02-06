@@ -1,7 +1,6 @@
 import re
-import socket
 
-BUFFER_SIZE = 1024
+from tcp_client import TCPClient
 
 
 def format_command(field, children = None):
@@ -16,7 +15,7 @@ def format_command(field, children = None):
 
 
 def parse_frequency(message):
-    result = re.match(r"b\'<CmdFreq:\d+>(\d+.\d+)\'", message)
+    result = re.match(r"<CmdFreq:\d+>(\d+.\d+)", message)
     if result:
         freq_str = result.group(1)
         if freq_str:
@@ -24,35 +23,22 @@ def parse_frequency(message):
 
 
 def parse_mode(message):
-    result = re.match(r"b\'<CmdMode:\d+>(\w+)\'", message)
+    result = re.match(r"<CmdMode:\d+>(\w+)", message)
     if result:
         mode = result.group(1)
         return mode
 
-class Commander:
-    def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
-        self.current_mode = ''
 
-    def __enter__(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.ip, self.port))
-        return self
-
+class Commander(TCPClient):
     def get_freq(self):
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
-        self.sock.send(bytes(cmd, 'utf-8'))
-        message = str(self.sock.recv(BUFFER_SIZE))
-        freq = parse_frequency(message)
-        return freq
+        self.send(cmd)
+        return parse_frequency(self.receive())
 
     def get_mode(self):
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
-        self.sock.send(bytes(cmd, 'utf-8'))
-        message = str(self.sock.recv(BUFFER_SIZE))
-        mode = parse_mode(message)
-        return mode
+        self.send(cmd)
+        return parse_mode(self.receive())
 
     def set_freq(self, freq, mode=None):
         if self.current_mode != mode and mode is not None:
@@ -62,12 +48,4 @@ class Commander:
         else:
             parameters = format_command('xcvrfreq', freq)
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
-        self.sock.send(bytes(cmd, 'utf-8'))
-
-    def close(self):
-        if self.sock:
-            self.sock.close()
-            self.sock = None
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.send(cmd)
