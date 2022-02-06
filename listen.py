@@ -57,12 +57,12 @@ if __name__ == '__main__':
                            (cmdr_mode != current_mode and isinstance(cmdr_mode, str)) :
                             current_freq = cmdr_freq
                             current_mode = cmdr_mode
-                            hamlib.set_freq(current_freq, current_mode)
+                            hamlib.set_freq_mode(current_freq, current_mode)
                         elif (hl_freq != current_freq and isinstance(hl_freq, int)) or \
                             (hl_mode != current_mode and isinstance(hl_mode, str)):
                             current_freq = hl_freq
                             current_mode = hl_mode
-                            cmdr.set_freq(current_freq, current_mode)
+                            cmdr.set_freq_mode(current_freq, current_mode)
                         time.sleep(params[SYNC_INTERVAL])
         except KeyboardInterrupt as ke:
             print("\nTerminated by user.")

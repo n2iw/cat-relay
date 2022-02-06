@@ -40,9 +40,9 @@ class Commander(TCPClient):
         self.send(cmd)
         return parse_mode(self.receive())
 
-    def set_freq(self, freq, mode=None):
-        if self.current_mode != mode and mode is not None:
-            self.current_mode = mode
+    def set_freq_mode(self, freq, mode=None):
+        if self.last_mode != mode and mode is not None:
+            self.last_mode = mode
             parameters = format_command('xcvrfreq', freq) + format_command('xcvrmode', mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
         else:

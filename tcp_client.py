@@ -8,7 +8,8 @@ class TCPClient:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        self.current_mode = ''
+        self.last_mode = ''
+        self.last_freq = 0
 
     def __enter__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,6 +29,12 @@ class TCPClient:
         if self.sock:
             self.sock.close()
             self.sock = None
+
+    def get_last_mode(self):
+        return self.last_mode
+
+    def get_last_freq(self):
+        return self.last_freq
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()

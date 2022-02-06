@@ -27,13 +27,13 @@ def parse_result(message):
 
 class HamLibClient(TCPClient):
 
-    def set_freq(self, freq, mode=None):
-        if self.current_mode != mode and mode is not None:
+    def set_freq_mode(self, freq, mode=None):
+        if self.last_mode != mode and mode is not None:
             message = f'M {mode} -1\n'
             self.send(message)
             result = self.receive()
             if parse_result(result):
-                self.current_mode = mode
+                self.last_mode = mode
             else:
                 print(f'Set Hamlib to {mode} mode failed!')
 
