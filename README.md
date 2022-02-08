@@ -29,6 +29,13 @@ for other users.
 - Correct IP addresses for RUMlogNG and SDR++ need to be set in config.yml unless you run everything on the same computer
 - Correct ports need to be set in config.yml, unless you happened to have the same ports as mine
 
+Example RUMlogNG settings 
+
+![RUMlogNG settings](RUMlogNG-settings.png "RUMlogNG settings")
+Example SDR++ settings
+
+![SDR++ settings](SDR++-settings.png "SDR++ settings") 
+
 ## Dependencies
 Cat-relay uses only one 3rd party library (pyyaml). To install it, open a terminal, go to the folder that contains cat-relay, 
 and run following command:
