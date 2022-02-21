@@ -4,9 +4,11 @@ SDR_IP: 127.0.0.1
 # Port number of SDR
 SDR_PORT: 4532
 
-# RUMlogNG settings, may also work with other DX-lab suite Commander compatible logging software
+# Logging software settings for RUMlogNG or DXLab suite Commander
 Logger_IP: 127.0.0.1
 Logger_PORT: 5555
+#Logger_IP: 127.0.0.1
+#Logger_PORT: 52002 # Commander uses port 52002 by default
 
 # Will automatically reconnect to logging software or SDR every "Reconnect_time" seconds
 Reconnect_time: 10  # seconds
