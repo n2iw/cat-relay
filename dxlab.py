@@ -15,9 +15,11 @@ def format_command(field, children = None):
 
 
 def parse_frequency(message):
-    result = re.match(r"<CmdFreq:\d+>(\d+.\d+)", message)
+    result = re.match(r"<CmdFreq:\d+>([\d,]+\.\d+)", message)
     if result:
         freq_str = result.group(1)
+        # remove ',' returned by Commander
+        freq_str = freq_str.replace(',', '')
         if freq_str:
             return int(float(freq_str) * 1000)
 
