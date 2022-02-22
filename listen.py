@@ -8,15 +8,20 @@ import yaml
 
 from hamlib import HamLibClient
 from dxlab import Commander
+from n1mm import N1MMClient
 
 HAMLIB_IP = 'SDR_IP'
 HAMLIB_PORT = 'SDR_PORT'
 
-CMDR_IP = 'Logger_IP'
-CMDR_PORT = 'Logger_PORT'
+LOGGER_IP = 'Logger_IP'
+LOGGER_PORT = 'Logger_PORT'
+
+RADIO_INFO_PORT = 'RADIO_INFO_PORT'
 
 RETRY_TIME = 'Reconnect_time'  # seconds
 SYNC_INTERVAL = 'Sync_time'  # seconds
+
+LOGGER_MODE = 'Logger_Mode'
 
 CONFIG_FILE = 'config.yml'
 
@@ -26,20 +31,33 @@ def get_parameters():
         HAMLIB_IP: '127.0.0.1',
         HAMLIB_PORT:  4532,
 
-        CMDR_IP: '127.0.0.1',
-        CMDR_PORT: 5555,
+        LOGGER_IP: '127.0.0.1',
+        LOGGER_PORT: 5555,
+
+        RADIO_INFO_PORT: 13063,
 
         RETRY_TIME: 10,  # seconds
-        SYNC_INTERVAL: 0.05  # seconds
+        SYNC_INTERVAL: 0.05,  # seconds
+
+        LOGGER_MODE: 'dxlab'
     }
 
     if os.path.isfile(CONFIG_FILE):
         with open(CONFIG_FILE) as c_file:
             file_config = yaml.safe_load(c_file)
             config.update(file_config)
+            config[LOGGER_MODE] = config[LOGGER_MODE].lower()
             print(config)
 
     return config
+
+
+def get_logger_client(params):
+    mode = params[LOGGER_MODE].lower()
+    if mode == 'dxlab':
+        return Commander(params[LOGGER_IP], params[LOGGER_PORT])
+    elif mode == 'wb':
+        return N1MMClient(params[RADIO_INFO_PORT], params[LOGGER_IP], params[LOGGER_PORT])
 
 
 if __name__ == '__main__':
@@ -47,8 +65,12 @@ if __name__ == '__main__':
     params = get_parameters()
     while True:
         try:
+            print(f'Connecting to SDR at {params[HAMLIB_IP]}:{params[HAMLIB_PORT]}')
             with HamLibClient(params[HAMLIB_IP], params[HAMLIB_PORT]) as sdr:
-                with Commander(params[CMDR_IP], params[CMDR_PORT]) as radio:
+                print(f'SDR connected.')
+                print(f'Connecting to Logger at {params[LOGGER_IP]}:{params[LOGGER_PORT]}')
+                with get_logger_client(params) as radio:
+                    print(f'Logger connected')
                     while True:
                         radio_freq = radio.get_freq()
                         radio_mode = radio.get_mode()

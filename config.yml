@@ -4,11 +4,16 @@ SDR_IP: 127.0.0.1
 # Port number of SDR
 SDR_PORT: 4532
 
+# Logger_Mode can be "DXLab" or "WB" for Waterfall Bandmap
+Logger_Mode: dxlab
 # Logging software settings for RUMlogNG or DXLab suite Commander
 Logger_IP: 127.0.0.1
 Logger_PORT: 5555
 #Logger_IP: 127.0.0.1
 #Logger_PORT: 52002 # Commander uses port 52002 by default
+
+# Logger's outbound UDP port set for sending RadioInfo messages to, Cat-Relay will listen on this port
+RADIO_INFO_PORT: 13063
 
 # Will automatically reconnect to logging software or SDR every "Reconnect_time" seconds
 Reconnect_time: 10  # seconds

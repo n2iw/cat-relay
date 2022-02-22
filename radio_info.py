@@ -2,6 +2,8 @@ import xml.etree.ElementTree as ET
 
 FREQUENCY = 'Freq1'
 
+APP_NAME = 'Cat-Relay'
+
 
 def read_child(data, name):
     result = None
@@ -22,6 +24,18 @@ def get_radio_info(xml_data):
     return None
 
 
+def set_frequency_message(freq):
+    cmd = ET.Element('radio_setfrequency')
+    app = ET.SubElement(cmd, 'app')
+    app.text = APP_NAME
+    radio_nr = ET.SubElement(cmd, 'radionr')
+    radio_nr.text = '1'
+    frequency = ET.SubElement(cmd, 'frequency')
+    frequency.text = f'{freq/1000:.3f}'
+    message = ET.tostring(cmd, xml_declaration=True)
+    return message
+
+
 class RadioInfo:
     TAG_NAME = 'RadioInfo'
     elements = [
@@ -39,6 +53,13 @@ class RadioInfo:
         '''
         if self.data and 'Freq' in self.data:
             return int(self.data['Freq']) * 10
+
+    def get_mode(self):
+        '''
+        :return: mode
+        '''
+        if self.data and 'Mode' in self.data:
+            return self.data['Mode']
 
     def __init__(self, root):
         if root.tag == self.TAG_NAME:
