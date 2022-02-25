@@ -31,6 +31,10 @@ def parse_mode(message):
         return mode
 
 
+def format_freq(freq):
+    return f'{freq/1000:,.3f}'
+
+
 VALID_MODES = [
     'AM',
     'CW',
@@ -63,10 +67,10 @@ class Commander(CATClient):
 
     def set_freq_mode(self, freq, mode=None):
         if mode and self.get_last_mode() != mode:
-            parameters = format_command('xcvrfreq', freq) + format_command('xcvrmode', mode)
+            parameters = format_command('xcvrfreq', format_freq(freq)) + format_command('xcvrmode', mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
         elif freq and self.get_last_freq() != freq:
-            parameters = format_command('xcvrfreq', freq)
+            parameters = format_command('xcvrfreq', format_freq(freq))
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         else:
             return
