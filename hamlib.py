@@ -49,36 +49,35 @@ VALID_MODES = [
 ]
 
 
-
-
 class HamLibClient(CATClient):
 
     def set_freq_mode(self, freq, mode=None):
-        if self.last_mode != mode and mode is not None:
+        if mode and self.get_last_mode() != mode:
             message = f'M {mode} -1\n'
             self.send(message)
             result = self.receive()
             if parse_result(result):
-                self.last_mode = mode
+                self.set_last_mode(mode)
             else:
                 print(f'Set Hamlib to {mode} mode failed!')
 
-        message = f'F {freq}\n'
-        self.send(message)
-        result = self.receive()
-        if parse_result(result):
-            self.last_freq = freq
-        else:
-            print(f'Set Hamlib to {freq}Hz failed!')
+        if freq and self.get_last_freq() != freq:
+            message = f'F {freq}\n'
+            self.send(message)
+            result = self.receive()
+            if parse_result(result):
+                self.set_last_freq(freq)
+            else:
+                print(f'Set Hamlib to {freq}Hz failed!')
 
     def get_freq(self):
         message = f'f\n'
         self.send(message)
-        self.last_freq = parse_frequency(self.receive())
-        return self.last_freq
+        self.set_last_freq(parse_frequency(self.receive()))
+        return self.get_last_freq()
 
     def get_mode(self):
         message = f'm\n'
         self.send(message)
-        self.last_mode = self.map_mode(parse_mode(self.receive()))
-        return self.last_mode
+        self.set_last_mode(self.map_mode(parse_mode(self.receive())))
+        return self.get_last_mode()

@@ -74,15 +74,15 @@ if __name__ == '__main__':
                     while True:
                         radio_freq = radio.get_freq()
                         radio_mode = radio.get_mode()
-                        if (radio_freq != sdr.get_last_freq() and isinstance(radio_freq, int)) or \
-                           (radio_mode != sdr.get_last_mode() and isinstance(radio_mode, str)):
+                        if (radio_freq and radio_freq != sdr.get_last_freq() and isinstance(radio_freq, int)) or \
+                           (radio_mode and radio_mode != sdr.get_last_mode() and isinstance(radio_mode, str)):
                             sdr.set_freq_mode(radio_freq, radio_mode)
                             print(f'Sync from radio to SDR {radio_freq}Hz {radio_mode}')
                         else:
                             sdr_freq = sdr.get_freq()
                             sdr_mode = sdr.get_mode()
-                            if (sdr_freq != radio.get_last_freq() and isinstance(sdr_freq, int)) or \
-                                (sdr_mode != radio.get_last_mode() and isinstance(sdr_mode, str)):
+                            if (sdr_freq and sdr_freq != radio.get_last_freq() and isinstance(sdr_freq, int)) or \
+                                (sdr_mode and sdr_mode != radio.get_last_mode() and isinstance(sdr_mode, str)):
                                 radio.set_freq_mode(sdr_freq, sdr_mode)
                                 print(f'Sync from SDR to radio {sdr_freq}Hz {sdr_mode}')
                         time.sleep(params[SYNC_INTERVAL])

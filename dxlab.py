@@ -15,7 +15,7 @@ def format_command(field, children = None):
 
 
 def parse_frequency(message):
-    result = re.match(r"<CmdFreq:\d+>([\d,]+\.\d+)", message)
+    result = re.match(r"<CmdFreq:\d+> *([\d,]+\.\d+)", message)
     if result:
         freq_str = result.group(1)
         # remove ',' returned by Commander
@@ -50,22 +50,26 @@ class Commander(CATClient):
     def get_freq(self):
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         self.send(cmd)
-        self.last_freq = parse_frequency(self.receive())
-        return self.last_freq
+        self.set_last_freq(parse_frequency(self.receive()))
+        return self.get_last_freq()
 
     def get_mode(self):
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         self.send(cmd)
-        self.last_mode = self.map_mode(parse_mode(self.receive()))
-        return self.last_mode
+        mode = self.map_mode(parse_mode(self.receive()))
+        if mode:
+            self.set_last_mode(mode)
+        return self.get_last_mode()
 
     def set_freq_mode(self, freq, mode=None):
-        if self.last_mode != mode and mode is not None:
-            self.last_mode = mode
+        if mode and self.get_last_mode() != mode:
             parameters = format_command('xcvrfreq', freq) + format_command('xcvrmode', mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
-        else:
+        elif freq and self.get_last_freq() != freq:
             parameters = format_command('xcvrfreq', freq)
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
-        self.last_freq = freq
+        else:
+            return
         self.send(cmd)
+        self.set_last_mode(mode)
+        self.set_last_freq(freq)
