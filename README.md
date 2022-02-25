@@ -1,18 +1,20 @@
 #Cat-relay
 ## About
-Cat-relay is a Ham/SWL utility, written in Python3. It synchronizes frequency between SDR++ and RUMlogNG/DXLab Commander
-logging software, so SDR++ can act as a band scope/panadapter for your radio.
-
-## Supported platforms and software
-Although Cat-relay is platform independent, the main use case is running SDR++ (cross-platform) with RUMlogNG on MacOS or 
-DXLab Commander on Windows. It may work with other SDR software that is compatible with Hamlib/Rigctl, or other 
-logging software that is  compatible with DXLab Commander commands. At this moment, no software other than SDR++, 
-RUMlogNG and DXLab Commander is tested. 
+Cat-relay is a tool to change your SDR into a band scope/panadapter for your radio. It synchronizes frequencies and modes
+between SDR software and logging software. 
 
 ##  How is works
-Cat-relay reads frequencies and modes from SDR++ and RUMlogNG every 50ms (configurable), and synchronizes them if either
-of them changes. Cat-relay, SDR++ and logging software can run on one computer or different computers in the same local
+Cat-relay reads frequencies and modes from SDR and logging software every 50ms (configurable), and synchronizes them if either
+of them changes. Cat-relay, SDR and logging software can run on the same computer or different computers in the same local
 network.
+
+## Supported platforms and software
+Cat-relay was written in Python3 and can run on Mac, Windows and Linux. However, the main use case is running SDR++ 
+(cross-platform) with RUMlogNG on MacOS or DXLab Commander on Windows. 
+
+It may work with other SDR software if it provides a Hamlib/Rigctl compatible TCP server, or other logging software if it
+provides a DXLab Commander compatible TCP server. At this moment, only SDR++, RUMlogNG and DXLab Commander are tested. 
+MacLoggerDX will also work, except changing modes on SDR is not supported by MacLoggerDX. 
 
 ## Mode mapping
 Most common modes are supported in both SDR++ and RUMlogNG/DXLab Commander therefore should work properly, e.g., CW, USB, LSB, AM and FM. 
