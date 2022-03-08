@@ -9,6 +9,7 @@ import yaml
 from hamlib import HamLibClient
 from dxlab import Commander
 from n1mm import N1MMClient
+from fldigi import FldigiClient
 
 HAMLIB_IP = 'SDR_IP'
 HAMLIB_PORT = 'SDR_PORT'
@@ -17,6 +18,8 @@ LOGGER_IP = 'Logger_IP'
 LOGGER_PORT = 'Logger_PORT'
 
 RADIO_INFO_PORT = 'RADIO_INFO_PORT'
+RADIO_FLDIGI_IP = 'RADIO_FLDIGI_IP'
+RADIO_FLDIGI_PORT = 'RADIO_FLDIGI_PORT'
 
 RETRY_TIME = 'Reconnect_time'  # seconds
 SYNC_INTERVAL = 'Sync_time'  # seconds
@@ -35,6 +38,8 @@ def get_parameters():
         LOGGER_PORT: 5555,
 
         RADIO_INFO_PORT: 13063,
+        RADIO_FLDIGI_IP: '127.0.0.1',
+        RADIO_FLDIGI_PORT: 7362,
 
         RETRY_TIME: 10,  # seconds
         SYNC_INTERVAL: 0.05,  # seconds
@@ -58,7 +63,8 @@ def get_logger_client(params):
         return Commander(params[LOGGER_IP], params[LOGGER_PORT])
     elif mode == 'wb':
         return N1MMClient(params[RADIO_INFO_PORT], params[LOGGER_IP], params[LOGGER_PORT])
-
+    elif mode == 'fldigi':
+        return FldigiClient(params[RADIO_FLDIGI_IP], params[RADIO_FLDIGI_PORT])
 
 if __name__ == '__main__':
     # reconnect every RETRY_TIME seconds, until user press Ctrl+C
@@ -70,7 +76,7 @@ if __name__ == '__main__':
                 print(f'SDR connected.')
                 print(f'Connecting to Logger at {params[LOGGER_IP]}:{params[LOGGER_PORT]}')
                 with get_logger_client(params) as radio:
-                    print(f'Logger connected')
+                    print(f'Logger connected\nradio = {radio}')
                     while True:
                         radio_freq = radio.get_freq()
                         radio_mode = radio.get_mode()
