@@ -7,9 +7,9 @@ SDR_PORT: 4532
 # Logger_Mode can be:
 # "DXLab" for DXLab Commander app
 # "WB" for Waterfall Bandmap
-# "fldigi" for controlling radio through Fldigi app
+# "flrig" for controlling radio through Flrig app
 
-Logger_Mode: fldigi
+Logger_Mode: flrig
 # Logging software settings for RUMlogNG or DXLab suite Commander
 Logger_IP: 127.0.0.1
 Logger_PORT: 5555
@@ -19,9 +19,9 @@ Logger_PORT: 5555
 # Logger's outbound UDP port set for sending RadioInfo messages to, Cat-Relay will listen on this port
 RADIO_INFO_PORT: 13063
 
-# The following parameters define what address and port the Fldigi app is located at.
-RADIO_FLDIGI_IP: 127.0.0.1
-RADIO_FLDIGI_PORT: 7362
+# The following parameters define what address and port the Flrig app is located at.
+RADIO_FLRIG_IP: 127.0.0.1
+RADIO_FLRIG_PORT: 12345
 
 # Will automatically reconnect to logging software or SDR every "Reconnect_time" seconds
 Reconnect_time: 10  # seconds
