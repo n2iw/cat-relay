@@ -51,7 +51,7 @@ def get_parameters():
             file_config = yaml.safe_load(c_file)
             config.update(file_config)
             config[LOGGER_MODE] = config[LOGGER_MODE].lower()
-            print(config)
+  #         print(config) if you are wondering if everything has been configured correctly.
 
     return config
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             with HamLibClient(params[HAMLIB_IP], params[HAMLIB_PORT]) as sdr:
                 print(f'SDR connected.')
                 with get_logger_client(params) as radio:
-                    print(f'Logger connected\nradio = {radio}')
+                    print(f'Radio controlling app connected\n')
                     while True:
                         radio_freq = radio.get_freq()
                         radio_mode = radio.get_mode()
