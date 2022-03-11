@@ -1,6 +1,9 @@
-import time
 import xmlrpc.client
 from transport import RequestsTransport
+from requests.exceptions import ConnectionError
+
+## The following are the valid modes that can be used on my Icom IC-7100. They may require changing for
+## your radio. Note that 
 
 VALID_MODES = [
  'LSB',
@@ -27,20 +30,22 @@ class FlrigClient():
         self._ip = ip
         self._port = port
         self._sock = None
-        self.flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
-        print(f'init: flrig = {self.flrig}')
 
     def __enter__(self):
 #        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #        self._sock.connect((self._ip, self._port))
 #        self._enter()
-        print(f'Attempting to connect to connect to Flrig at IP address={self._ip}, port={self._port}, via XMP-RPC')
-        print(f'enter: flrig = {self.flrig}')
+#        print(f'Attempting to connect to connect to Flrig at IP address={self._ip}, port={self._port}, via XMP-RPC')
+        try:
+            self.flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
+        except ConnectionError as e:
+            print(e)
+            print("Are you sure flrig is running?")
+            sys.exit()
         return self
 
     def __exit__(self, a, b, c):
-        print(f'exit')
-
+        return
 
     def set_freq_mode(self, raw_freq, mode):
         freq = float(raw_freq)
