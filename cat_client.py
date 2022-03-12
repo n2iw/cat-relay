@@ -1,6 +1,5 @@
 from tcp_client import TCPClient
 
-
 class CATClient(TCPClient):
     ALTERNATIVE_MODES = {
         'RTTY': 'USB',  # RTTY mode from radio will be mapped to USB mode

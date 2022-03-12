@@ -1,3 +1,16 @@
+## While not exactly clear from the file name, this module interacts with the SDR++ app
+
+## It is a lightweight substitute for a full Hamlib implementation
+## which has many dependences and would be complete overkill for our use.
+## It supports only three methods:
+##     set_freq_mode, which sets the frequency and mode of the SDR
+##     get_freq, which returns the frequency of the SDR
+##     get_mode, which returns the mode of the SDR
+
+## As mentioned in the README file, this would probably work with pretty much any SDR
+## software that implements the f, m, F, and M Hamlib functions that 
+## read and write the frequency and mode.
+
 import re
 from cat_client import CATClient
 

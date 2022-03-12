@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import os
 import sys
 import time
@@ -9,6 +8,7 @@ import yaml
 from hamlib import HamLibClient
 from dxlab import Commander
 from n1mm import N1MMClient
+from flrig import FlrigClient
 
 HAMLIB_IP = 'SDR_IP'
 HAMLIB_PORT = 'SDR_PORT'
@@ -17,6 +17,8 @@ LOGGER_IP = 'Logger_IP'
 LOGGER_PORT = 'Logger_PORT'
 
 RADIO_INFO_PORT = 'RADIO_INFO_PORT'
+RADIO_FLRIG_IP = 'RADIO_FLDIGI_IP'
+RADIO_FLRIG_PORT = 'RADIO_FLDIGI_PORT'
 
 RETRY_TIME = 'Reconnect_time'  # seconds
 SYNC_INTERVAL = 'Sync_time'  # seconds
@@ -35,6 +37,8 @@ def get_parameters():
         LOGGER_PORT: 5555,
 
         RADIO_INFO_PORT: 13063,
+        RADIO_FLRIG_IP: '127.0.0.1',
+        RADIO_FLRIG_PORT: 12345,
 
         RETRY_TIME: 10,  # seconds
         SYNC_INTERVAL: 0.05,  # seconds
@@ -47,7 +51,7 @@ def get_parameters():
             file_config = yaml.safe_load(c_file)
             config.update(file_config)
             config[LOGGER_MODE] = config[LOGGER_MODE].lower()
-            print(config)
+  #         print(config) if you are wondering if everything has been configured correctly.
 
     return config
 
@@ -55,10 +59,14 @@ def get_parameters():
 def get_logger_client(params):
     mode = params[LOGGER_MODE].lower()
     if mode == 'dxlab':
+        print(f'Connecting to Commander at {params[LOGGER_IP]}:{params[LOGGER_PORT]}')
         return Commander(params[LOGGER_IP], params[LOGGER_PORT])
     elif mode == 'wb':
+        print(f'Connecting to N1MM at {params[LOGGER_IP]}:{params[LOGGER_PORT]}')
         return N1MMClient(params[RADIO_INFO_PORT], params[LOGGER_IP], params[LOGGER_PORT])
-
+    elif mode == 'flrig':
+        print(f'Connecting to FLRig at {params[RADIO_FLRIG_IP]}:{params[RADIO_FLRIG_PORT]}')
+        return FlrigClient(params[RADIO_FLRIG_IP], params[RADIO_FLRIG_PORT])
 
 if __name__ == '__main__':
     # reconnect every RETRY_TIME seconds, until user press Ctrl+C
@@ -68,9 +76,8 @@ if __name__ == '__main__':
             print(f'Connecting to SDR at {params[HAMLIB_IP]}:{params[HAMLIB_PORT]}')
             with HamLibClient(params[HAMLIB_IP], params[HAMLIB_PORT]) as sdr:
                 print(f'SDR connected.')
-                print(f'Connecting to Logger at {params[LOGGER_IP]}:{params[LOGGER_PORT]}')
                 with get_logger_client(params) as radio:
-                    print(f'Logger connected')
+                    print(f'Radio controlling app connected\n')
                     while True:
                         radio_freq = radio.get_freq()
                         radio_mode = radio.get_mode()
