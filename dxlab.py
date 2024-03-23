@@ -32,7 +32,11 @@ def parse_mode(message):
 
 
 def format_freq(freq):
-    return f'{freq/1000:,.3f}'
+    # return f'{freq/1000:,.3f}'
+    # has to add leading 0s to make MacLogger DX work, DXlab and RUMlogNG don't need it
+    return f'{freq/1000:>010,.3f}'
+
+
 
 
 VALID_MODES = [

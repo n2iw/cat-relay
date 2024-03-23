@@ -9,7 +9,7 @@ SDR_PORT: 4532
 # "WB" for Waterfall Bandmap
 # "flrig" for controlling radio through Flrig app
 
-Logger_Mode: flrig
+Logger_Mode: DXLab
 
 # Logging software settings for RUMlogNG Commander Server
 Logger_IP: 127.0.0.1
