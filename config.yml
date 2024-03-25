@@ -27,4 +27,4 @@ RADIO_FLRIG_PORT: 12345
 # Will automatically reconnect to logging software or SDR every "Reconnect_time" seconds
 Reconnect_time: 10  # seconds
 # Will sync SDR with logging software every "Sync_time" seconds
-Sync_time: 0.1  # seconds
+Sync_time: 0.05  # seconds
