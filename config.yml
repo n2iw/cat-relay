@@ -20,7 +20,7 @@ CAT_PORT: 5555
 # N1MM's outbound UDP port set for sending RadioInfo messages to, Cat-Relay will listen on this port
 RADIO_INFO_PORT: 13063
 
-# Will automatically reconnect to logging software or SDR every "Reconnect_time" seconds
-Reconnect_time: 10  # seconds
-# Will sync SDR with logging software every "Sync_time" seconds
-Sync_time: 0.05  # seconds
+# Will automatically reconnect to CAT software or SDR every "Reconnect_time" seconds
+RECONNECT_TIME: 10  # seconds
+# Will sync SDR with CAT software every "Sync_time" seconds
+SYNC_TIME: 0.05  # seconds

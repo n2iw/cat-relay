@@ -57,7 +57,7 @@ if __name__ == '__main__':
             print("\nTerminated by user.")
             sys.exit()
         except Exception as e:
-            retry_time = params.get_retry_time()
+            retry_time = params.get_reconnect_time()
             print(e)
             print(f'Retry in {retry_time} seconds ...')
             print('Press Ctrl+C to exit')

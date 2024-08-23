@@ -1,5 +1,6 @@
 import os
 import yaml
+import pprint
 
 SDR_IP = 'SDR_IP'
 SDR_PORT = 'SDR_PORT'
@@ -9,8 +10,8 @@ CAT_PORT = 'CAT_PORT'
 
 RADIO_INFO_PORT = 'RADIO_INFO_PORT'
 
-RETRY_TIME = 'Reconnect_time'  # seconds
-SYNC_INTERVAL = 'Sync_time'  # seconds
+RECONNECT_TIME = 'RECONNECT_TIME'  # seconds
+SYNC_INTERVAL = 'SYNC_TIME'  # seconds
 
 CAT_SOFTWARE = 'CAT_Software'
 DXLAB = 'dxlab'
@@ -25,15 +26,15 @@ class Parameters:
             SDR_IP: '127.0.0.1',
             SDR_PORT:  4532,
 
+            CAT_SOFTWARE: DXLAB,
+
             CAT_IP: '127.0.0.1',
             CAT_PORT: 5555,
 
             RADIO_INFO_PORT: 13063,
 
-            RETRY_TIME: 10,  # seconds
-            SYNC_INTERVAL: 0.05,  # seconds
-
-            CAT_SOFTWARE: DXLAB
+            RECONNECT_TIME: 10,  # seconds
+            SYNC_INTERVAL: 0.05  # seconds
         }
 
         script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -52,7 +53,7 @@ class Parameters:
                         break
                 except Exception as e:
                     print(e)
-        print(self.config)
+        pprint.pp(self.config, indent=4)
 
     def get_cat_software(self):
         return self.config[CAT_SOFTWARE]
@@ -75,5 +76,5 @@ class Parameters:
     def get_sync_interval(self):
         return self.config[SYNC_INTERVAL]
 
-    def get_retry_time(self):
-        return self.config[RETRY_TIME]
+    def get_reconnect_time(self):
+        return self.config[RECONNECT_TIME]
