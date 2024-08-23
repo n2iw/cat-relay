@@ -4,15 +4,15 @@ import yaml
 SDR_IP = 'SDR_IP'
 SDR_PORT = 'SDR_PORT'
 
-RADIO_CONTROL_IP = 'Radio_Control_IP'
-RADIO_CONTROL_PORT = 'Radio_Control_PORT'
+CAT_IP = 'CAT_IP'
+CAT_PORT = 'CAT_PORT'
 
 RADIO_INFO_PORT = 'RADIO_INFO_PORT'
 
 RETRY_TIME = 'Reconnect_time'  # seconds
 SYNC_INTERVAL = 'Sync_time'  # seconds
 
-RADIO_CONTROL_SOFTWARE = 'Radio_Control_Software'
+CAT_SOFTWARE = 'CAT_Software'
 DXLAB = 'dxlab'
 N1MM = 'n1mm'
 FLRIG = 'flrig'
@@ -25,15 +25,15 @@ class Parameters:
             SDR_IP: '127.0.0.1',
             SDR_PORT:  4532,
 
-            RADIO_CONTROL_IP: '127.0.0.1',
-            RADIO_CONTROL_PORT: 5555,
+            CAT_IP: '127.0.0.1',
+            CAT_PORT: 5555,
 
             RADIO_INFO_PORT: 13063,
 
             RETRY_TIME: 10,  # seconds
             SYNC_INTERVAL: 0.05,  # seconds
 
-            RADIO_CONTROL_SOFTWARE: DXLAB
+            CAT_SOFTWARE: DXLAB
         }
 
         script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -48,20 +48,20 @@ class Parameters:
                     with open(config_file_full_path) as c_file:
                         file_config = yaml.safe_load(c_file)
                         self.config.update(file_config)
-                        self.config[RADIO_CONTROL_SOFTWARE] = self.config[RADIO_CONTROL_SOFTWARE].lower()
+                        self.config[CAT_SOFTWARE] = self.config[CAT_SOFTWARE].lower()
                         break
                 except Exception as e:
                     print(e)
         print(self.config)
 
-    def get_logger_mode(self):
-        return self.config[RADIO_CONTROL_SOFTWARE]
+    def get_cat_software(self):
+        return self.config[CAT_SOFTWARE]
 
-    def get_logger_ip(self):
-        return self.config[RADIO_CONTROL_IP]
+    def get_cat_ip(self):
+        return self.config[CAT_IP]
 
-    def get_logger_port(self):
-        return self.config[RADIO_CONTROL_PORT]
+    def get_cat_port(self):
+        return self.config[CAT_PORT]
 
     def get_radio_info_port(self):
         return self.config[RADIO_INFO_PORT]

@@ -22,7 +22,7 @@ class RequestsTransport(xmlrpc.client.Transport):
     :example:
 
     >>> import xmlrpc.client
-    >>> from transport import RequestsTransport
+    >>> from radio_control.transport import RequestsTransport
     >>> s = xmlrpc.client.ServerProxy('http://yoursite.com/xmlrpc', transport=RequestsTransport())
     >>> s.demo.sayHello()
     Hello!

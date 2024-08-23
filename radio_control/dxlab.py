@@ -1,6 +1,6 @@
 import re
 
-from cat_client import CATClient
+from utils.cat_client import CATClient
 
 
 def format_command(field, children = None):

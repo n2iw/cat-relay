@@ -1,4 +1,4 @@
-from tcp_client import TCPClient
+from utils.tcp_client import TCPClient
 
 class CATClient(TCPClient):
     ALTERNATIVE_MODES = {

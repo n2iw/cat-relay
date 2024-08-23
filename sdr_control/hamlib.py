@@ -12,7 +12,7 @@
 ## read and write the frequency and mode.
 
 import re
-from cat_client import CATClient
+from utils.cat_client import CATClient
 
 
 def parse_frequency(message):

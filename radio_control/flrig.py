@@ -1,5 +1,5 @@
 import xmlrpc.client
-from transport import RequestsTransport
+from .transport import RequestsTransport
 from requests.exceptions import ConnectionError
 
 ## The following are the valid modes that can be used on my Icom IC-7100. They may require changing for

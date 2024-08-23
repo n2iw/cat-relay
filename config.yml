@@ -4,20 +4,20 @@ SDR_IP: 127.0.0.1
 # Port number of SDR
 SDR_PORT: 4532
 
-# Radio_Control_Software can be:
+# CAT_Software can be:
 # "DXLab" for DXLab Commander compatible app such as RumLogNG
 # "N1MM" for N1MM+
 # "Flrig" for controlling radio through Flrig app
 
-Radio_Control_Software: DXLab
+CAT_Software: DXLab
 
 # Logging software settings for RUMlogNG Commander Server
-Radio_Control_IP: 127.0.0.1
-Radio_Control_PORT: 5555
+CAT_IP: 127.0.0.1
+CAT_PORT: 5555
 #Radio_Control_IP: 127.0.0.1
 #Radio_Control_PORT: 52002 # Commander uses port 52002 by default
 
-# Radio control software's outbound UDP port set for sending RadioInfo messages to, Cat-Relay will listen on this port
+# N1MM's outbound UDP port set for sending RadioInfo messages to, Cat-Relay will listen on this port
 RADIO_INFO_PORT: 13063
 
 # Will automatically reconnect to logging software or SDR every "Reconnect_time" seconds

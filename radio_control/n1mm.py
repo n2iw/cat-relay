@@ -1,7 +1,7 @@
 import socket
 import threading
 
-from radio_info import get_radio_info, set_frequency_message
+from .radio_info import get_radio_info, set_frequency_message
 
 
 def parse_frequency_mode(data):

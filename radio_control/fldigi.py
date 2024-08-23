@@ -1,6 +1,5 @@
 import pyfldigi
-from tcp_client import TCPClient
-import time
+from utils.tcp_client import TCPClient
 
 VALID_MODES = [
  'LSB',

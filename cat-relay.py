@@ -3,7 +3,7 @@
 import sys
 import time
 
-from hamlib import HamLibClient
+from sdr_control.hamlib import HamLibClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
@@ -12,9 +12,9 @@ from config  import Parameters, DXLAB, N1MM, FLRIG
 
 
 def get_logger_client(params):
-    mode = params.get_logger_mode()
-    radio_control_ip = params.get_logger_ip()
-    radio_control_port = params.get_logger_port()
+    mode = params.get_cat_software()
+    radio_control_ip = params.get_cat_ip()
+    radio_control_port = params.get_cat_port()
     if mode == DXLAB:
         print(f'Connecting to Commander at {radio_control_ip}:{radio_control_port}')
         return Commander(radio_control_ip, radio_control_port)
