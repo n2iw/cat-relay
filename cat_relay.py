@@ -16,12 +16,17 @@ class CatRelay:
         self.cat_ip = params.get_cat_ip()
         self.cat_port= params.get_cat_port()
         self.radio_info_port = params.get_radio_info_port()
-        self.cat_client = self.connect_cat()
-        print(f'Cat Software connected\n')
-
         self.sdr_ip = params.get_sdr_ip()
         self.sdr_port = params.get_sdr_port()
-        self.sdr_client = self.connect_sdr()
+
+        self.cat_client = None
+        self.sdr_client = None
+
+    def connect(self):
+        self.cat_client = self._connect_cat()
+        print(f'Cat Software connected\n')
+
+        self.sdr_client = self._connect_sdr()
         print(f'SDR connected.')
 
     def __del__(self):
@@ -33,11 +38,11 @@ class CatRelay:
             self.sdr_client.close()
             self.sdr_client = None
 
-    def connect_sdr(self):
+    def _connect_sdr(self):
         print(f'Connecting to SDR at {self.sdr_ip}:{self.sdr_port}')
         return HamLibClient(self.sdr_ip, self.sdr_port).__enter__()
 
-    def connect_cat(self):
+    def _connect_cat(self):
         if self.cat_mode == DXLAB:
             print(f'Connecting to Commander at {self.cat_ip}:{self.cat_port}')
             return  Commander(self.cat_ip, self.cat_port).__enter__()
@@ -73,12 +78,14 @@ if __name__ == '__main__':
     while True:
         try:
             cat_relay = CatRelay(params)
+            cat_relay.connect()
             while True:
                 cat_relay.sync()
                 time.sleep(params.get_sync_interval())
 
         except KeyboardInterrupt as ke:
             print("\nTerminated by user.")
+            cat_relay = None
             sys.exit()
         except Exception as e:
             retry_time = params.get_reconnect_time()
