@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QW
 from PySide6.QtCore import QTimer
 
 from cat_relay import CatRelay, MESSAGE
-from config import Config
+from config import Config, Parameters
 from settings import Settings
 
 
@@ -27,12 +27,12 @@ class MainWindow(QMainWindow):
         setting_button.clicked.connect(self.open_settings)
         layout.addWidget(setting_button)
 
-        self.params = Config()
+        self.params = Config().params
         self.cat_relay = None
         self.connect_cat_relay()
 
     def update_params(self, params):
-        if isinstance(params, Config):
+        if isinstance(params, Parameters):
             print('Parameters updated')
             self.params = params
         else:
@@ -49,16 +49,16 @@ class MainWindow(QMainWindow):
             self.cat_relay = CatRelay(self.params)
             self.cat_relay.connect()
             self.connection_label.setText("Connected")
-            self.startTimer(self.params.get_sync_interval() * 1000)
+            self.startTimer(self.params.sync_interval * 1000)
         except Exception as e:
             print(e)
             self.connect_cat_relay_later(e)
 
     def connect_cat_relay_later(self, error):
-        message = f'{error}: Retry in {self.params.get_reconnect_time()} seconds ...'
+        message = f'{error}: Retry in {self.params.reconnect_time} seconds ...'
         self.connection_label.setText(message)
         self.cat_relay = None
-        QTimer.singleShot(self.params.get_reconnect_time() * 1000, self.connect_cat_relay)
+        QTimer.singleShot(self.params.reconnect_time * 1000, self.connect_cat_relay)
 
     def timerEvent(self, event):
         try:

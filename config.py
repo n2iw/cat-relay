@@ -20,22 +20,63 @@ FLRIG = 'flrig'
 
 CONFIG_FILE = 'config.yml'
 
+class Parameters:
+    def __init__(self,
+                sdr_ip='127.0.0.1',
+                sdr_port=4532,
+                cat_software=DXLAB,
+                cat_ip='127.0.0.1',
+                cat_port=5555,
+                radio_info_port=13063,
+                reconnect_time=10,
+                sync_interval=0.05
+    ):
+        self.sdr_ip = sdr_ip
+        self.sdr_port = sdr_port
+        self.cat_software = cat_software
+        self.cat_ip = cat_ip
+        self.cat_port = cat_port
+        self.radio_info_port = radio_info_port
+        self.reconnect_time = reconnect_time
+        self.sync_interval = sync_interval
+
+    def update_from(self, params_dict):
+        self.sdr_ip = params_dict.get(SDR_IP, self.sdr_ip)
+        self.sdr_port = params_dict.get(SDR_PORT, self.sdr_port)
+        self.cat_software = params_dict.get(CAT_SOFTWARE, self.cat_software).lower()
+        self.cat_ip = params_dict.get(CAT_IP, self.cat_ip)
+        self.cat_port = params_dict.get(CAT_PORT, self.cat_port)
+        self.radio_info_port = params_dict.get(RADIO_INFO_PORT, self.radio_info_port)
+        self.reconnect_time = params_dict.get(RECONNECT_TIME, self.reconnect_time)
+        self.sync_interval = params_dict.get(SYNC_INTERVAL, self.sync_interval)
+
+    def set_sdr_ip(self, ip):
+        self.sdr_ip = ip
+
+    def set_sdr_port(self, port):
+        self.sdr_port = port
+
+    def set_cat_software(self, software):
+        self.cat_software = software
+
+    def set_cat_ip(self, ip):
+        self.cat_ip = ip
+
+    def set_cat_port(self, port):
+        self.cat_port = port
+
+    def set_radio_info_port(self, port):
+        self.radio_info_port = port
+
+    def set_reconnect_time(self, seconds):
+        self.reconnect_time = seconds
+
+    def set_sync_interval(self, seconds):
+        self.sync_interval = seconds
+
 class Config:
     def __init__(self):
-        self.config = {
-            SDR_IP: '127.0.0.1',
-            SDR_PORT:  4532,
-
-            CAT_SOFTWARE: DXLAB,
-
-            CAT_IP: '127.0.0.1',
-            CAT_PORT: 5555,
-
-            RADIO_INFO_PORT: 13063,
-
-            RECONNECT_TIME: 10,  # seconds
-            SYNC_INTERVAL: 0.05  # seconds
-        }
+        self.params = Parameters()
 
         script_dir = os.path.dirname(os.path.realpath(__file__))
         work_dir = os.getcwd()
@@ -48,73 +89,8 @@ class Config:
                     print(f'Config file {config_file_full_path} found, reading configuration...')
                     with open(config_file_full_path) as c_file:
                         file_config = yaml.safe_load(c_file)
-                        self.config.update(file_config)
-                        self.config[CAT_SOFTWARE] = self.config[CAT_SOFTWARE].lower()
+                        self.params.update_from(file_config)
                         break
                 except Exception as e:
                     print(e)
-        pprint.pp(self.config, indent=4)
-
-    def set_cat_software(self, software):
-        # print(f'Change Cat Software to "{software}"')
-        if software:
-            self.config[CAT_SOFTWARE] = software.lower()
-
-    def get_cat_software(self):
-        return self.config[CAT_SOFTWARE]
-
-    def set_cat_ip(self, ip):
-        # print(f'Change CAT IP to {ip}')
-        if ip:
-            self.config[CAT_IP] = ip
-
-    def get_cat_ip(self):
-        return self.config[CAT_IP]
-
-    def set_cat_port(self, port):
-        # print(f'Change CAT PORT to {port}')
-        if port:
-            self.config[CAT_PORT] = port
-
-    def get_cat_port(self):
-        return self.config[CAT_PORT]
-
-    def set_radio_info_port(self, port):
-        # print(f'Change Radio Info PORT to {port}')
-        if port:
-            self.config[RADIO_INFO_PORT] = port
-
-    def get_radio_info_port(self):
-        return self.config[RADIO_INFO_PORT]
-
-    def set_sdr_ip(self, ip):
-        # print(f'Change SDR IP to {ip}')
-        if ip:
-            self.config[SDR_IP] = ip
-
-    def get_sdr_ip(self):
-        return self.config[SDR_IP]
-
-    def set_sdr_port(self, port):
-        # print(f'Change SDR PORT to {port}')
-        if port:
-            self.config[SDR_PORT] = port
-
-    def get_sdr_port(self):
-        return self.config[SDR_PORT]
-
-    def set_sync_interval(self, seconds):
-        # print(f'Change Sync time to {seconds}')
-        if seconds:
-            self.config[SYNC_INTERVAL] = seconds
-
-    def get_sync_interval(self):
-        return self.config[SYNC_INTERVAL]
-
-    def set_reconnect_time(self, seconds):
-        # print(f'Change reconnect time to {seconds}')
-        if seconds:
-            self.config[RECONNECT_TIME] = seconds
-
-    def get_reconnect_time(self):
-        return self.config[RECONNECT_TIME]
+        pprint.pp(self.params, indent=4)

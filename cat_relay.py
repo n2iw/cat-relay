@@ -27,12 +27,12 @@ def sync_result(source, destination, frequency, mode):
 
 class CatRelay:
     def __init__(self, params):
-        self.cat_mode = params.get_cat_software()
-        self.cat_ip = params.get_cat_ip()
-        self.cat_port= params.get_cat_port()
-        self.radio_info_port = params.get_radio_info_port()
-        self.sdr_ip = params.get_sdr_ip()
-        self.sdr_port = params.get_sdr_port()
+        self.cat_mode = params.cat_software
+        self.cat_ip = params.cat_ip
+        self.cat_port = params.cat_port
+        self.radio_info_port = params.radio_info_port
+        self.sdr_ip = params.sdr_ip
+        self.sdr_port = params.sdr_port
 
         self.cat_client = None
         self.sdr_client = None
@@ -90,7 +90,7 @@ class CatRelay:
 
 if __name__ == '__main__':
     # reconnect every RETRY_TIME seconds, until user press Ctrl+C
-    params = Config()
+    params = Config().params
     while True:
         try:
             cat_relay = CatRelay(params)
@@ -99,14 +99,14 @@ if __name__ == '__main__':
                 result = cat_relay.sync()
                 if result:
                     print(result[MESSAGE])
-                time.sleep(params.get_sync_interval())
+                time.sleep(params.sync_interval)
 
         except KeyboardInterrupt as ke:
             print("\nTerminated by user.")
             cat_relay = None
             sys.exit()
         except Exception as e:
-            retry_time = params.get_reconnect_time()
+            retry_time = params.reconnect_time
             print(e)
             print(f'Retry in {retry_time} seconds ...')
             print('Press Ctrl+C to exit')
