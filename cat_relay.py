@@ -8,7 +8,22 @@ from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
 
-from config  import Parameters, DXLAB, N1MM, FLRIG
+from config  import Config, DXLAB, N1MM, FLRIG
+
+MODE = "mode"
+FREQUENCY = "frequency"
+DESTINATION = "destination"
+SOURCE = "source"
+MESSAGE = 'message'
+
+def sync_result(source, destination, frequency, mode):
+    return {
+        MESSAGE: f'Sync from {source} to {destination} {frequency}Hz {mode}',
+        SOURCE: source,
+        DESTINATION: destination,
+        FREQUENCY: frequency,
+        MODE: mode
+    }
 
 class CatRelay:
     def __init__(self, params):
@@ -63,24 +78,27 @@ class CatRelay:
         if (radio_freq and radio_freq != self.sdr_client.get_last_freq() and isinstance(radio_freq, int)) or \
                 (radio_mode and radio_mode != self.sdr_client.get_last_mode() and isinstance(radio_mode, str)):
             self.sdr_client.set_freq_mode(radio_freq, radio_mode)
-            print(f'Sync from radio to SDR {radio_freq}Hz {radio_mode}')
+            return sync_result('radio', 'SDR', radio_freq, radio_mode)
         else:
             sdr_freq = self.sdr_client.get_freq()
             sdr_mode = self.sdr_client.get_mode()
             if (sdr_freq and sdr_freq != self.cat_client.get_last_freq() and isinstance(sdr_freq, int)) or \
                     (sdr_mode and sdr_mode != self.cat_client.get_last_mode() and isinstance(sdr_mode, str)):
                 self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
-                print(f'Sync from SDR to radio {sdr_freq}Hz {sdr_mode}')
+                return sync_result('SDR', 'radio', sdr_freq, sdr_mode)
+
 
 if __name__ == '__main__':
     # reconnect every RETRY_TIME seconds, until user press Ctrl+C
-    params = Parameters()
+    params = Config()
     while True:
         try:
             cat_relay = CatRelay(params)
             cat_relay.connect()
             while True:
-                cat_relay.sync()
+                result = cat_relay.sync()
+                if result:
+                    print(result[MESSAGE])
                 time.sleep(params.get_sync_interval())
 
         except KeyboardInterrupt as ke:

@@ -20,7 +20,7 @@ FLRIG = 'flrig'
 
 CONFIG_FILE = 'config.yml'
 
-class Parameters:
+class Config:
     def __init__(self):
         self.config = {
             SDR_IP: '127.0.0.1',
@@ -55,26 +55,66 @@ class Parameters:
                     print(e)
         pprint.pp(self.config, indent=4)
 
+    def set_cat_software(self, software):
+        # print(f'Change Cat Software to "{software}"')
+        if software:
+            self.config[CAT_SOFTWARE] = software.lower()
+
     def get_cat_software(self):
         return self.config[CAT_SOFTWARE]
+
+    def set_cat_ip(self, ip):
+        # print(f'Change CAT IP to {ip}')
+        if ip:
+            self.config[CAT_IP] = ip
 
     def get_cat_ip(self):
         return self.config[CAT_IP]
 
+    def set_cat_port(self, port):
+        # print(f'Change CAT PORT to {port}')
+        if port:
+            self.config[CAT_PORT] = port
+
     def get_cat_port(self):
         return self.config[CAT_PORT]
+
+    def set_radio_info_port(self, port):
+        # print(f'Change Radio Info PORT to {port}')
+        if port:
+            self.config[RADIO_INFO_PORT] = port
 
     def get_radio_info_port(self):
         return self.config[RADIO_INFO_PORT]
 
+    def set_sdr_ip(self, ip):
+        # print(f'Change SDR IP to {ip}')
+        if ip:
+            self.config[SDR_IP] = ip
+
     def get_sdr_ip(self):
         return self.config[SDR_IP]
+
+    def set_sdr_port(self, port):
+        # print(f'Change SDR PORT to {port}')
+        if port:
+            self.config[SDR_PORT] = port
 
     def get_sdr_port(self):
         return self.config[SDR_PORT]
 
+    def set_sync_interval(self, seconds):
+        # print(f'Change Sync time to {seconds}')
+        if seconds:
+            self.config[SYNC_INTERVAL] = seconds
+
     def get_sync_interval(self):
         return self.config[SYNC_INTERVAL]
+
+    def set_reconnect_time(self, seconds):
+        # print(f'Change reconnect time to {seconds}')
+        if seconds:
+            self.config[RECONNECT_TIME] = seconds
 
     def get_reconnect_time(self):
         return self.config[RECONNECT_TIME]
