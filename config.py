@@ -1,6 +1,5 @@
 import os
 import yaml
-import pprint
 
 SDR_IP = 'SDR_IP'
 SDR_PORT = 'SDR_PORT'
@@ -14,6 +13,7 @@ RECONNECT_TIME = 'RECONNECT_TIME'  # seconds
 SYNC_INTERVAL = 'SYNC_TIME'  # seconds
 
 CAT_SOFTWARE = 'CAT_Software'
+PLACEHOLDER_SOFTWARE = '--select your software--'
 DXLAB = 'DXLab'
 RUMLOG = 'RUMLogNG'
 N1MM = 'N1MM'

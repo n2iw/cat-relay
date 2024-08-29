@@ -6,7 +6,7 @@ from gui_components.cat_dropdown import CatDropdown
 from gui_components.ip_input import IPInput
 from gui_components.port_input import PortInput
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
-
+from config import PLACEHOLDER_SOFTWARE
 
 class Settings(QDialog):
     def __init__(self, params, parent=None):
@@ -52,6 +52,9 @@ class Settings(QDialog):
 
     def accept(self):
         if hasattr(self.parent_window, "update_params"):
+            if self.params.cat_software == PLACEHOLDER_SOFTWARE:
+                print('Please select a CAT Software')
+                return
             self.parent_window.update_params(self.params)
         else:
             print("Unknown parent window, do nothing")
