@@ -8,7 +8,7 @@ from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
 
-from config  import Config, DXLAB, N1MM, FLRIG
+from config  import Config, DXLAB, N1MM, FLRIG, RUMLOG
 
 MODE = "mode"
 FREQUENCY = "frequency"
@@ -58,7 +58,7 @@ class CatRelay:
         return HamLibClient(self.sdr_ip, self.sdr_port).__enter__()
 
     def _connect_cat(self):
-        if self.cat_mode == DXLAB:
+        if self.cat_mode in [DXLAB, RUMLOG] :
             print(f'Connecting to Commander at {self.cat_ip}:{self.cat_port}')
             return  Commander(self.cat_ip, self.cat_port).__enter__()
         elif self.cat_mode == N1MM:
@@ -68,7 +68,7 @@ class CatRelay:
             print(f'Connecting to FLRig at {self.cat_ip}:{self.cat_port}')
             return FlrigClient(self.cat_ip, self.cat_port).__enter__()
         else:
-            message = f'Cat software "" is not supported!'
+            message = f'Cat software "{self.cat_mode}" is not supported!'
             print(message)
             raise Exception(message)
 

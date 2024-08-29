@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QComboBox
-from config import DXLAB, N1MM, FLRIG
+from idna import valid_label_length
+
+from config import VALID_CAT_SOFTWARES
 
 class CatDropdown(QWidget):
    def __init__(self, label, value, handler):
@@ -10,10 +12,14 @@ class CatDropdown(QWidget):
        layout.addWidget(message)
 
        dropdown = QComboBox()
-       dropdown.addItem(DXLAB)
-       dropdown.addItem(N1MM)
-       dropdown.addItem(FLRIG)
-       dropdown.setCurrentText(value)
+       dropdown.addItem('---select software--')
+       for software in VALID_CAT_SOFTWARES:
+           dropdown.addItem(software)
+
+       if value in VALID_CAT_SOFTWARES:
+           dropdown.setCurrentText(value)
+       else:
+           dropdown.setCurrentText(None)
        dropdown.currentTextChanged.connect(handler)
        layout.addWidget(dropdown)
 
