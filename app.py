@@ -83,11 +83,21 @@ class MainWindow(QMainWindow):
 
     def connect_cat_relay(self):
         try:
-            self.cat_relay.connect()
+            if self.cat_relay:
+                self.cat_relay.connect()
+            else:
+                print("Cat Relay object doesn't exist!")
+                sys.exit()
             self.connection_label.setText("Connected")
             self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
         except Exception as e:
             print(e)
+            if self.cat_relay:
+                self.cat_relay.disconnect()
+            else:
+                print("Cat Relay object doesn't exist!")
+                sys.exit()
+
             if self.auto_connect:
                 self.connect_cat_relay_later(e)
 
@@ -113,7 +123,14 @@ class MainWindow(QMainWindow):
                 if result:
                     self.sync_label.setText(result[MESSAGE])
         except Exception as e:
-            self.connect_cat_relay_later(e)
+            # Clear last message
+            self.sync_label.setText("")
+            # Stop syncing
+            if self.timer_id:
+                self.killTimer(self.timer_id)
+            # Reconnect later
+            if self.auto_connect:
+                self.connect_cat_relay_later(e)
 
 
 app = QApplication(sys.argv)
