@@ -51,7 +51,6 @@ class Parameters:
         self.sdr_port = port
 
     def set_cat_software(self, software):
-        print(f"setting cat software to {software}")
         self.cat_software = software
 
     def set_cat_ip(self, ip):
@@ -125,9 +124,7 @@ class Config:
             print(f'Creating new config file at {config_file_path}')
             config_file_path = self.default_config_file_full_path
 
-        print(self.get_data())
         with open(config_file_path, 'w') as c_file:
             yaml_str = yaml.dump(self.get_data())
-            print(yaml_str)
             c_file.write(yaml_str)
 

@@ -37,6 +37,14 @@ class CatRelay:
         self.cat_client = None
         self.sdr_client = None
 
+    def set_params(self, params):
+        self.cat_mode = params.cat_software
+        self.cat_ip = params.cat_ip
+        self.cat_port = params.cat_port
+        self.radio_info_port = params.radio_info_port
+        self.sdr_ip = params.sdr_ip
+        self.sdr_port = params.sdr_port
+
     def connect(self):
         self.cat_client = self._connect_cat()
         print(f'Cat Software connected\n')
@@ -44,7 +52,7 @@ class CatRelay:
         self.sdr_client = self._connect_sdr()
         print(f'SDR connected.')
 
-    def __del__(self):
+    def disconnect(self):
         if self.cat_client:
             self.cat_client.close()
             self.cat_client = None
@@ -52,6 +60,9 @@ class CatRelay:
         if self.sdr_client:
             self.sdr_client.close()
             self.sdr_client = None
+
+    def __del__(self):
+        self.disconnect()
 
     def _connect_sdr(self):
         print(f'Connecting to SDR at {self.sdr_ip}:{self.sdr_port}')
