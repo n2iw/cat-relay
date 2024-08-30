@@ -1,10 +1,9 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QComboBox
 
-from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE
 
 
-class CatDropdown(QWidget):
-   def __init__(self, label, value, handler):
+class Dropdown(QWidget):
+   def __init__(self, label, value, value_list, placeholder, handler):
        super().__init__()
 
        layout = QVBoxLayout()
@@ -12,14 +11,14 @@ class CatDropdown(QWidget):
        layout.addWidget(message)
 
        dropdown = QComboBox()
-       if value not in VALID_CAT_SOFTWARES:
-           dropdown.addItem(PLACEHOLDER_SOFTWARE)
-           handler(PLACEHOLDER_SOFTWARE)
+       if value not in value_list:
+           dropdown.addItem(placeholder)
+           handler(placeholder)
 
-       for software in VALID_CAT_SOFTWARES:
+       for software in value_list:
            dropdown.addItem(software)
 
-       if value in VALID_CAT_SOFTWARES:
+       if value in value_list:
            dropdown.setCurrentText(value)
 
        dropdown.currentTextChanged.connect(handler)

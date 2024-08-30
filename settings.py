@@ -2,11 +2,11 @@ import copy
 
 from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox
 
-from gui_components.cat_dropdown import CatDropdown
+from gui_components.dropdown import Dropdown
 from gui_components.ip_input import IPInput
 from gui_components.port_input import PortInput
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
-from config import PLACEHOLDER_SOFTWARE
+from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE
 
 class Settings(QDialog):
     def __init__(self, params, parent=None):
@@ -27,7 +27,7 @@ class Settings(QDialog):
         layout.addWidget(PortInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port)))
 
         # CAT Software
-        layout.addWidget(CatDropdown('Radio Control(CAT) Software', self.params.cat_software, lambda software: self.params.set_cat_software(software)))
+        layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_cat_software(software)))
 
         # CAT IP
         layout.addWidget(IPInput('CAT IP', self.params.cat_ip, lambda ip: self.params.set_cat_ip(ip)))
