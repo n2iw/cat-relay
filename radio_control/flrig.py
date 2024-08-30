@@ -59,11 +59,13 @@ class FlrigClient():
         except ConnectionError as e:
             print(e)
             print("Are you sure flrig is running?")
-            sys.exit()
         return self
 
     def __exit__(self, a, b, c):
         return
+
+    def close(self):
+        self.flrig = None
 
     def set_freq_mode(self, raw_freq, mode):
         freq = float(raw_freq)

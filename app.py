@@ -67,7 +67,8 @@ class MainWindow(QMainWindow):
             print('Parameters updated')
             self.config.params = params
             self.config.save_to_file()
-            self.cat_relay.set_params(params)
+            if self.cat_relay:
+                self.cat_relay.set_params(params)
         else:
             print(f'Unknown params object {params}')
 
@@ -91,7 +92,8 @@ class MainWindow(QMainWindow):
                 self.connect_cat_relay_later(e)
 
     def disconnect_cat_relay(self):
-        self.cat_relay.disconnect()
+        if self.cat_relay:
+            self.cat_relay.disconnect()
         self.connection_label.setText("Disconnected")
 
         if self.timer_id:
@@ -102,7 +104,6 @@ class MainWindow(QMainWindow):
     def connect_cat_relay_later(self, error):
         message = f'{error}: Retry in {self.config.params.reconnect_time} seconds ...'
         self.connection_label.setText(message)
-        self.cat_relay = None
         QTimer.singleShot(self.config.params.reconnect_time * 1000, self.connect_cat_relay)
 
     def timerEvent(self, event):
