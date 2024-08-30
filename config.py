@@ -1,6 +1,8 @@
 import os
 import yaml
 
+SDR_PP = 'SDR++'
+VALID_SDRS = [SDR_PP]
 SDR_IP = 'SDR_IP'
 SDR_PORT = 'SDR_PORT'
 

@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QComboBox
 
 
 class Dropdown(QWidget):
-   def __init__(self, label, value, value_list, placeholder, handler):
+   def __init__(self, label, value, value_list, placeholder, handler, disabled = False):
        super().__init__()
 
        layout = QVBoxLayout()
@@ -23,6 +23,7 @@ class Dropdown(QWidget):
 
        dropdown.currentTextChanged.connect(handler)
        layout.addWidget(dropdown)
+       dropdown.setDisabled(disabled)
 
        self.setLayout(layout)
 

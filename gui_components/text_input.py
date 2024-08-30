@@ -3,8 +3,8 @@ from inspect import isfunction
 from PySide6.QtWidgets import QWidget, QLabel, QLineEdit, QHBoxLayout
 
 
-class PortInput(QWidget):
-    def __init__(self, label, value, handler):
+class TextInput(QWidget):
+    def __init__(self, label, value, handler, disabled = False):
         super().__init__()
 
         self.handler = handler
@@ -16,6 +16,8 @@ class PortInput(QWidget):
         line = QLineEdit(str(value))
         line.textChanged.connect(self.port_changed)
         layout.addWidget(line)
+
+        line.setDisabled(disabled)
 
         self.setLayout(layout)
 
