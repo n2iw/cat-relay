@@ -52,6 +52,8 @@ class MainWindow(QMainWindow):
             self.connection_label.setText("Connecting...")
             self.connect_cat_relay()
 
+        self.timer_id = None
+
     def connect_clicked(self, checked):
         if checked:
             self.auto_connect = True
@@ -70,6 +72,8 @@ class MainWindow(QMainWindow):
             print(f'Unknown params object {params}')
 
     def open_settings(self):
+        # disconnect before opens setting window
+        self.disconnect_cat_relay()
         settings = Settings(self.config.params, self)
         if settings.exec():
             if self.auto_connect:
@@ -80,7 +84,7 @@ class MainWindow(QMainWindow):
         try:
             self.cat_relay.connect()
             self.connection_label.setText("Connected")
-            self.startTimer(self.config.params.sync_interval * 1000)
+            self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
         except Exception as e:
             print(e)
             if self.auto_connect:
@@ -90,7 +94,9 @@ class MainWindow(QMainWindow):
         self.cat_relay.disconnect()
         self.connection_label.setText("Disconnected")
 
-        # TODO: how to stop default timer?
+        if self.timer_id:
+            self.killTimer(self.timer_id)
+            self.timer_id = None
 
 
     def connect_cat_relay_later(self, error):
