@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
         # Connect status label
-        self.connection_label = QLabel("")
+        self.connection_label = QLabel("Not connected")
         layout.addWidget(self.connection_label)
 
         # Sync status label
@@ -112,6 +112,9 @@ class MainWindow(QMainWindow):
 
 
     def connect_cat_relay_later(self, error):
+        # Completely disconnect first
+        if self.cat_relay:
+            self.cat_relay.disconnect()
         message = f'{error}: Retry in {self.config.params.reconnect_time} seconds ...'
         self.connection_label.setText(message)
         QTimer.singleShot(self.config.params.reconnect_time * 1000, self.connect_cat_relay)
@@ -128,6 +131,7 @@ class MainWindow(QMainWindow):
             # Stop syncing
             if self.timer_id:
                 self.killTimer(self.timer_id)
+                self.timer_id = None
             # Reconnect later
             if self.auto_connect:
                 self.connect_cat_relay_later(e)
