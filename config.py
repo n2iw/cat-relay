@@ -24,17 +24,25 @@ VALID_CAT_SOFTWARES = [DXLAB, RUMLOG, N1MM, FLRIG]
 
 CONFIG_FILE = 'cat-relay.yml'
 
+LOCAL = 'This computer'
+NETWORK = 'Another computer'
+VALID_LOCATIONS = [LOCAL, NETWORK]
+
+LOCAL_HOST = '127.0.0.1'
+
 class Parameters:
     def __init__(self,
-                sdr_ip='127.0.0.1',
+                sdr_location=LOCAL,
+                sdr_ip=LOCAL_HOST,
                 sdr_port=4532,
                 cat_software=RUMLOG,
-                cat_ip='127.0.0.1',
+                cat_ip=LOCAL_HOST,
                 cat_port=5555,
                 radio_info_port=13063,
                 reconnect_time=10,
                 sync_interval=0.05
     ):
+        self.sdr_location = sdr_location
         self.sdr_ip = sdr_ip
         self.sdr_port = sdr_port
         self.cat_software = cat_software
@@ -43,6 +51,11 @@ class Parameters:
         self.radio_info_port = radio_info_port
         self.reconnect_time = reconnect_time
         self.sync_interval = sync_interval
+
+    def set_sdr_location(self, location):
+        self.sdr_location = location
+        if location == LOCAL:
+            self.sdr_ip = LOCAL_HOST
 
     def set_sdr_ip(self, ip):
         self.sdr_ip = ip
