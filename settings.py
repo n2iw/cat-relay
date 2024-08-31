@@ -14,6 +14,7 @@ class Settings(QDialog):
 
         self.params = copy.deepcopy(params)
 
+        self.radio_info = None
         self.setWindowTitle("Settings")
         self.setLayout(self.create_layout())
 
@@ -29,7 +30,7 @@ class Settings(QDialog):
         layout.addWidget(TextInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port)))
 
         # CAT Software
-        layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_cat_software(software)))
+        layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, self.cat_software_changed))
 
         # CAT IP
         layout.addWidget(TextInput('CAT IP', self.params.cat_ip, lambda ip: self.params.set_cat_ip(ip)))
@@ -52,6 +53,10 @@ class Settings(QDialog):
         layout.addWidget(button_box)
 
         return layout
+
+    def cat_software_changed(self, software):
+        self.params.set_cat_software(software)
+        self.radio_info.set_enabled(software == N1MM)
 
     def accept(self):
         if hasattr(self.parent_window, "update_params"):

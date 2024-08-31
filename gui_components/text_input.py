@@ -13,15 +13,18 @@ class TextInput(QWidget):
         message = QLabel(f'{label}: ')
         layout.addWidget(message)
 
-        line = QLineEdit(str(value))
-        line.textChanged.connect(self.port_changed)
-        layout.addWidget(line)
+        self.line = QLineEdit(str(value))
+        self.line.textChanged.connect(self.text_changed)
+        layout.addWidget(self.line)
 
-        line.setDisabled(disabled)
+        self.line.setDisabled(disabled)
 
         self.setLayout(layout)
 
-    def port_changed(self, port):
+    def text_changed(self, port):
         if isfunction(self.handler):
             self.handler(int(port))
+
+    def set_enabled(self, enabled):
+        self.line.setEnabled(enabled)
 
