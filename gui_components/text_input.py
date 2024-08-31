@@ -6,7 +6,7 @@ INTEGER = 'integer'
 TEXT = 'text'
 
 class TextInput(QWidget):
-    def __init__(self, label, value, handler, enabled = True, data_type = TEXT):
+    def __init__(self, label, value, handler, visible = True, data_type = TEXT):
         super().__init__()
 
         self.handler = handler
@@ -20,7 +20,8 @@ class TextInput(QWidget):
         self.line.textChanged.connect(self.text_changed)
         layout.addWidget(self.line)
 
-        self.line.setEnabled(enabled)
+        if not visible:
+            self.hide()
 
         self.setLayout(layout)
 
@@ -31,6 +32,9 @@ class TextInput(QWidget):
                 data = int(text)
             self.handler(data)
 
-    def set_enabled(self, enabled):
-        self.line.setEnabled(enabled)
+    def set_visibility(self, visible):
+        if visible:
+            self.show()
+        else:
+            self.hide()
 
