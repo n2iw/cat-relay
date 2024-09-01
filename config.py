@@ -66,6 +66,21 @@ class Parameters(QObject):
         self.reconnect_time = reconnect_time
         self.sync_interval = sync_interval
 
+    def copy(self):
+        return Parameters(
+            self.sdr_software,
+            self.sdr_location,
+            self.sdr_ip,
+            self.sdr_port,
+            self.cat_location,
+            self.cat_software,
+            self.cat_ip,
+            self.cat_port,
+            self.radio_info_port,
+            self.reconnect_time,
+            self.sync_interval
+        )
+
     def set_sdr_location(self, location):
         if self.sdr_location != location:
             self.sdr_location = location

@@ -14,8 +14,7 @@ class Settings(QDialog):
         super().__init__(parent)
 
         # Set up data
-        # self.params = copy.deepcopy(params)
-        self.params = params
+        self.params = params.copy()
 
         # Set up UI
         self.parent_window = parent
