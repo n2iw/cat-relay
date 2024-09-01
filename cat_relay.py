@@ -58,18 +58,29 @@ class CatRelay(QObject):
         self.sdr_port = params.sdr_port
 
     def is_connected(self):
-        return self.cat_client and self.sdr_client
+        return self.cat_client is not None and self.sdr_client is not None
 
     def connect_clients(self):
-        self.cat_client = self._connect_cat()
-        print(f'Cat Software connected')
+        try:
+            self.cat_client = self._connect_cat()
+            print(f'Cat Software connected')
 
-        self.sdr_client = self._connect_sdr()
-        print(f'SDR connected.')
-        self.connection_state_changed.emit(self.is_connected())
+            self.sdr_client = self._connect_sdr()
+            print(f'SDR connected.')
+
+        except Exception as e:
+            print(e)
+            self.disconnect_clients()
+
+        finally:
+            self.connection_state_changed.emit(self.is_connected())
+            return self.is_connected()
 
 
     def disconnect_clients(self):
+        # save current state
+        old_state = self.is_connected()
+
         if self.cat_client:
             self.cat_client.close()
             self.cat_client = None
@@ -79,6 +90,10 @@ class CatRelay(QObject):
             self.sdr_client.close()
             self.sdr_client = None
             print(f'SDR disconnected.')
+
+        new_state = self.is_connected()
+        if old_state != new_state:
+            self.connection_state_changed.emit(self.is_connected())
 
     def __del__(self):
         self.disconnect_clients()

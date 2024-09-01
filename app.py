@@ -34,22 +34,22 @@ class MainWindow(QMainWindow):
         button_box = QHBoxLayout()
         layout.addLayout(button_box)
 
-        # Settings button
-        setting_button = QPushButton("Settings")
-        setting_button.clicked.connect(self.open_settings)
-        button_box.addWidget(setting_button)
+        # Auto connect checkbox
+        auto_connect_button = QCheckBox("Auto Reconnect")
+        auto_connect_button.checkStateChanged.connect(self.auto_connect_changed)
+        button_box.addWidget(auto_connect_button)
 
-        #
+        # Connect button
         self.connect_button = QPushButton(CONNECT)
         self.connect_button.setCheckable(True)
         self.connect_button.setChecked(True)
         self.connect_button.clicked.connect(self.connect_clicked)
         button_box.addWidget(self.connect_button)
 
-        # Auto connect checkbox
-        auto_connect_button = QCheckBox("Auto-connect")
-        auto_connect_button.checkStateChanged.connect(self.auto_connect_changed)
-        button_box.addWidget(auto_connect_button)
+        # Settings button
+        setting_button = QPushButton("Settings")
+        setting_button.clicked.connect(self.open_settings)
+        button_box.addWidget(setting_button)
 
         self.config = Config()
         self.cat_relay = CatRelay(self.config.params)
@@ -74,7 +74,6 @@ class MainWindow(QMainWindow):
 
     @Slot(bool)
     def cat_relay_connection_changed(self, state):
-        print(f'Cat Relay connection signal received {state}')
         # Update button text
         if state:
             self.connect_button.setText(DISCONNECT)
@@ -109,26 +108,21 @@ class MainWindow(QMainWindow):
             self.connect_cat_relay()
 
     def connect_cat_relay(self):
-        try:
-            if self.cat_relay:
-                self.cat_relay.connect_clients()
+        if self.cat_relay:
+            result = self.cat_relay.connect_clients()
+            if result:
+                self.connection_label.setText("Connected")
+                self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
             else:
-                print("Cat Relay object doesn't exist!")
-                sys.exit()
-            self.connection_label.setText("Connected")
-            self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
-        except Exception as e:
-            print(e)
-            if self.cat_relay:
-                self.cat_relay.disconnect_clients()
-            else:
-                print("Cat Relay object doesn't exist!")
-                sys.exit()
+                if self.auto_connect:
+                    message = 'Connection failed, will try connect later'
+                    print(message)
+                    print('-' * 40)
+                    self.connect_cat_relay_later(message)
 
-            if self.auto_connect:
-                print('Connection failed, will try connect later')
-                print('-' * 40)
-                self.connect_cat_relay_later(e)
+        else:
+            print("Cat Relay object doesn't exist!")
+            sys.exit()
 
     def disconnect_cat_relay(self):
         if self.cat_relay:
