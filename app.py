@@ -1,6 +1,8 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout
-from PySide6.QtCore import QTimer
+
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
+    QCheckBox
+from PySide6.QtCore import QTimer, Qt
 
 from cat_relay import CatRelay, MESSAGE
 from config import Config, Parameters
@@ -35,27 +37,27 @@ class MainWindow(QMainWindow):
         setting_button.clicked.connect(self.open_settings)
         button_box.addWidget(setting_button)
 
-        connect_button = QPushButton("Connect")
-        connect_button.setCheckable(True)
-        connect_button.clicked.connect(self.connect_clicked)
+        connect_button = QCheckBox("Auto-connect")
+        connect_button.checkStateChanged.connect(self.connect_clicked)
         button_box.addWidget(connect_button)
 
         self.config = Config()
+        self.cat_relay = CatRelay(self.config.params)
+        self.timer_id = None
+        self.auto_connect = False
+
         # Open settings automatically if no config file found
         if not self.config.config_file_full_path:
             self.open_settings()
 
         # Core function
-        self.cat_relay = CatRelay(self.config.params)
-        self.auto_connect = False
         if self.auto_connect:
             self.connection_label.setText("Connecting...")
             self.connect_cat_relay()
 
-        self.timer_id = None
 
-    def connect_clicked(self, checked):
-        if checked:
+    def connect_clicked(self, state):
+        if state == Qt.CheckState.Checked:
             self.auto_connect = True
             self.connect_cat_relay()
         else:
@@ -76,10 +78,10 @@ class MainWindow(QMainWindow):
         # disconnect before opens setting window
         self.disconnect_cat_relay()
         settings = Settings(self.config.params, self)
-        if settings.exec():
-            if self.auto_connect:
-                self.connection_label.setText("Settings updated. Reconnecting...")
-                self.connect_cat_relay()
+        settings.exec()
+        if self.auto_connect:
+            # self.connection_label.setText("Settings updated. Reconnecting...")
+            self.connect_cat_relay()
 
     def connect_cat_relay(self):
         try:

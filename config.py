@@ -51,7 +51,7 @@ class Parameters(QObject):
                  cat_port=5555,
                  radio_info_port=13063,
                  reconnect_time=10,
-                 sync_interval=0.05
+                 sync_interval=0.1
                  ):
         super().__init__(None)
         self.sdr_software = sdr_software
