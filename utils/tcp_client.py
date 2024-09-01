@@ -2,7 +2,7 @@ import re
 import socket
 
 BUFFER_SIZE = 1024
-
+SOCKET_TIMEOUT = 1
 
 class TCPClient:
     def __init__(self, ip, port):
@@ -12,6 +12,7 @@ class TCPClient:
 
     def __enter__(self):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.settimeout(SOCKET_TIMEOUT)
         self._sock.connect((self._ip, self._port))
         self._enter()
         return self

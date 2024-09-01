@@ -84,12 +84,12 @@ class Parameters(QObject):
     def set_sdr_location(self, location):
         if self.sdr_location != location:
             self.sdr_location = location
-            self.sdr_location_changed.emit( location)
+            self.sdr_location_changed.emit(location)
 
     def set_cat_location(self, location):
         if self.cat_location != location:
             self.cat_location = location
-            self.cat_location_changed.emit( location)
+            self.cat_location_changed.emit(location)
 
     def set_sdr_ip(self, ip):
         self.sdr_ip = ip

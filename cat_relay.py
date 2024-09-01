@@ -3,6 +3,8 @@
 import sys
 import time
 
+from PySide6.QtCore import QObject, Signal
+
 from sdr_control.hamlib import HamLibClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
@@ -25,8 +27,12 @@ def sync_result(source, destination, frequency, mode):
         MODE: mode
     }
 
-class CatRelay:
+class CatRelay(QObject):
+    # Signals
+    connection_state_changed = Signal(bool)
+
     def __init__(self, params):
+        super().__init__()
         self.cat_location = params.cat_location
         self.cat_software = params.cat_software
         self.cat_ip = params.cat_ip
@@ -51,14 +57,19 @@ class CatRelay:
         self.sdr_ip = params.sdr_ip
         self.sdr_port = params.sdr_port
 
-    def connect(self):
+    def is_connected(self):
+        return self.cat_client and self.sdr_client
+
+    def connect_clients(self):
         self.cat_client = self._connect_cat()
         print(f'Cat Software connected')
 
         self.sdr_client = self._connect_sdr()
         print(f'SDR connected.')
+        self.connection_state_changed.emit(self.is_connected())
 
-    def disconnect(self):
+
+    def disconnect_clients(self):
         if self.cat_client:
             self.cat_client.close()
             self.cat_client = None
@@ -70,7 +81,7 @@ class CatRelay:
             print(f'SDR disconnected.')
 
     def __del__(self):
-        self.disconnect()
+        self.disconnect_clients()
 
     def _connect_sdr(self):
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
@@ -115,7 +126,7 @@ if __name__ == '__main__':
     while True:
         try:
             cat_relay = CatRelay(params)
-            cat_relay.connect()
+            cat_relay.connect_clients()
             while True:
                 result = cat_relay.sync()
                 if result:
