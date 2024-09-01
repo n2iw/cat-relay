@@ -74,13 +74,27 @@ class MainWindow(QMainWindow):
 
     @Slot(bool)
     def cat_relay_connection_changed(self, state):
+        # print(f'CAT Relay connection status: {state}')
         # Update button text
         if state:
             self.connect_button.setText(DISCONNECT)
             self.connect_button.setChecked(False)
+            if not self.timer_id:
+                self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
         else:
             self.connect_button.setText(CONNECT)
             self.connect_button.setChecked(True)
+
+            # Stop sync timer
+            if self.timer_id:
+                self.killTimer(self.timer_id)
+                self.timer_id = None
+            # Reconnect later
+            if self.auto_connect:
+                message = 'Connection failed, will try connect later'
+                print(message)
+                print('-' * 40)
+                self.connect_cat_relay_later(message)
 
     def auto_connect_changed(self, state):
         if state == Qt.CheckState.Checked:
@@ -99,12 +113,16 @@ class MainWindow(QMainWindow):
             print(f'Unknown params object {params}')
 
     def open_settings(self):
+        # save previous setting and temporarily disable auto connect
+        old_auto_connect = self.auto_connect
+        self.auto_connect = False
+
         # disconnect before opens setting window
         self.disconnect_cat_relay()
         settings = Settings(self.config.params, self)
         settings.exec()
-        if self.auto_connect:
-            # self.connection_label.setText("Settings updated. Reconnecting...")
+        self.auto_connect = old_auto_connect
+        if self.auto_connect and not self.connect_button.isChecked():
             self.connect_cat_relay()
 
     def connect_cat_relay(self):
@@ -112,14 +130,8 @@ class MainWindow(QMainWindow):
             result = self.cat_relay.connect_clients()
             if result:
                 self.connection_label.setText("Connected")
-                self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
             else:
-                if self.auto_connect:
-                    message = 'Connection failed, will try connect later'
-                    print(message)
-                    print('-' * 40)
-                    self.connect_cat_relay_later(message)
-
+                self.connection_label.setText("Connection failed")
         else:
             print("Cat Relay object doesn't exist!")
             sys.exit()
@@ -143,21 +155,15 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(self.config.params.reconnect_time * 1000, self.connect_cat_relay)
 
     def timerEvent(self, event):
-        try:
-            if self.cat_relay:
-                result = self.cat_relay.sync()
-                if result:
-                    self.sync_label.setText(result[MESSAGE])
-        except Exception as e:
-            # Clear last message
-            self.sync_label.setText("")
-            # Stop syncing
-            if self.timer_id:
-                self.killTimer(self.timer_id)
-                self.timer_id = None
-            # Reconnect later
-            if self.auto_connect:
-                self.connect_cat_relay_later(e)
+        if self.cat_relay:
+            result = self.cat_relay.sync()
+            if result:
+                sync_msg = result[MESSAGE]
+                if sync_msg != self.sync_label.text():
+                    self.sync_label.setText(sync_msg)
+            else:
+                # Clear last message
+                self.sync_label.setText("")
 
 
 app = QApplication(sys.argv)

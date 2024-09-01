@@ -120,19 +120,24 @@ class CatRelay(QObject):
             raise Exception(message)
 
     def sync(self):
-        radio_freq = self.cat_client.get_freq()
-        radio_mode = self.cat_client.get_mode()
-        if (radio_freq and radio_freq != self.sdr_client.get_last_freq() and isinstance(radio_freq, int)) or \
-                (radio_mode and radio_mode != self.sdr_client.get_last_mode() and isinstance(radio_mode, str)):
-            self.sdr_client.set_freq_mode(radio_freq, radio_mode)
-            return sync_result('radio', 'SDR', radio_freq, radio_mode)
-        else:
-            sdr_freq = self.sdr_client.get_freq()
-            sdr_mode = self.sdr_client.get_mode()
-            if (sdr_freq and sdr_freq != self.cat_client.get_last_freq() and isinstance(sdr_freq, int)) or \
-                    (sdr_mode and sdr_mode != self.cat_client.get_last_mode() and isinstance(sdr_mode, str)):
-                self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
+        try:
+            radio_freq = self.cat_client.get_freq()
+            radio_mode = self.cat_client.get_mode()
+            if (radio_freq and radio_freq != self.sdr_client.get_last_freq() and isinstance(radio_freq, int)) or \
+                    (radio_mode and radio_mode != self.sdr_client.get_last_mode() and isinstance(radio_mode, str)):
+                self.sdr_client.set_freq_mode(radio_freq, radio_mode)
+                return sync_result('radio', 'SDR', radio_freq, radio_mode)
+            else:
+                sdr_freq = self.sdr_client.get_freq()
+                sdr_mode = self.sdr_client.get_mode()
+                if (sdr_freq and sdr_freq != self.cat_client.get_last_freq() and isinstance(sdr_freq, int)) or \
+                        (sdr_mode and sdr_mode != self.cat_client.get_last_mode() and isinstance(sdr_mode, str)):
+                    self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
                 return sync_result('SDR', 'radio', sdr_freq, sdr_mode)
+        except Exception as e:
+            print(e)
+            self.connection_state_changed.emit(self.is_connected())
+            return None
 
 
 if __name__ == '__main__':
