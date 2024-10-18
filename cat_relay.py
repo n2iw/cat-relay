@@ -17,15 +17,22 @@ FREQUENCY = "frequency"
 DESTINATION = "destination"
 SOURCE = "source"
 MESSAGE = 'message'
+CHANGED = 'changed'
 
-def sync_result(source, destination, frequency, mode):
-    return {
-        MESSAGE: f'Sync from {source} to {destination} {frequency}Hz {mode}',
-        SOURCE: source,
-        DESTINATION: destination,
-        FREQUENCY: frequency,
-        MODE: mode
+def sync_result(changed, source = None, destination = None, frequency = None, mode = None):
+    result = {
+        CHANGED: changed,
     }
+    if changed:
+        result.update({
+            MESSAGE: f'Sync from {source} to {destination} {frequency}Hz {mode}',
+            SOURCE: source,
+            DESTINATION: destination,
+            FREQUENCY: frequency,
+            MODE: mode
+        })
+    return result
+
 
 class CatRelay(QObject):
     # Signals
@@ -126,14 +133,15 @@ class CatRelay(QObject):
             if (radio_freq and radio_freq != self.sdr_client.get_last_freq() and isinstance(radio_freq, int)) or \
                     (radio_mode and radio_mode != self.sdr_client.get_last_mode() and isinstance(radio_mode, str)):
                 self.sdr_client.set_freq_mode(radio_freq, radio_mode)
-                return sync_result('radio', 'SDR', radio_freq, radio_mode)
+                return sync_result(True, 'radio', 'SDR', radio_freq, radio_mode)
             else:
                 sdr_freq = self.sdr_client.get_freq()
                 sdr_mode = self.sdr_client.get_mode()
                 if (sdr_freq and sdr_freq != self.cat_client.get_last_freq() and isinstance(sdr_freq, int)) or \
                         (sdr_mode and sdr_mode != self.cat_client.get_last_mode() and isinstance(sdr_mode, str)):
                     self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
-                return sync_result('SDR', 'radio', sdr_freq, sdr_mode)
+                    return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
+            return sync_result(False)
         except Exception as e:
             print(e)
             self.connection_state_changed.emit(self.is_connected())
@@ -150,7 +158,10 @@ if __name__ == '__main__':
             while True:
                 result = cat_relay.sync()
                 if result:
-                    print(result[MESSAGE])
+                    if result[CHANGED]:
+                        print(result[MESSAGE])
+                else:
+                    print('Sync failed')
                 time.sleep(params.sync_interval)
 
         except KeyboardInterrupt as ke:

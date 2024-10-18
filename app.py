@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QW
     QCheckBox
 from PySide6.QtCore import QTimer, Qt, Slot
 
-from cat_relay import CatRelay, MESSAGE
+from cat_relay import CatRelay, MESSAGE, CHANGED
 from config import Config, Parameters
 from settings import Settings
 
@@ -158,12 +158,14 @@ class MainWindow(QMainWindow):
         if self.cat_relay:
             result = self.cat_relay.sync()
             if result:
-                sync_msg = result[MESSAGE]
-                if sync_msg != self.sync_label.text():
-                    self.sync_label.setText(sync_msg)
+                if result[CHANGED]:
+                    sync_msg = result[MESSAGE]
+                    if sync_msg != self.sync_label.text():
+                        self.sync_label.setText(sync_msg)
             else:
                 # Clear last message
-                self.sync_label.setText("")
+                if self.sync_label.text() != '':
+                    self.sync_label.setText("")
 
 
 app = QApplication(sys.argv)
