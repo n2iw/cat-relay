@@ -1,0 +1,122 @@
+name: Build and Attache Apps
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build-macOS-apps:
+    runs-on: macos-latest
+    steps:
+      - name: Print the branch currently working on
+        run: echo "BRANCH_NAME=${{ matrix.branch-name }}"
+      - name: Check out the branch
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+
+      - name: Build macOS App - Intel
+        run: |
+          pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-x64
+
+      - name: Build macOS App - Apple Silicon
+        env:
+          ARCHFLAGS: "-arch arm64"  # Apple Silicon
+        run: |
+          pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-arm
+
+      - name: Pack macOS app - Intel
+        run: |
+          cd dist/mac-x64
+          zip -r ../cat-relay-mac-x64.zip .
+        shell: bash
+
+      - name: Pack macOS app - Apple Silicon
+        run: |
+          cd dist/mac-arm
+          zip -r ../cat-relay-mac-arm.zip .
+        shell: bash
+
+      - name: Pack source code
+        run: zip -r dist/cat-relay-src.zip .
+
+      - name: Attache macOS App - Intel to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/cat-relay-mac-x64.zip
+          asset_name: cat-relay-mac-x64.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attache macOS App - Apple Silicon to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/cat-relay-mac-arm.zip
+          asset_name: cat-relay-mac-arm.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attache source code to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/cat-relay-src.zip
+          asset_name: cat-relay-src.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows-app:
+    runs-on: windows-latest
+    steps:
+      - name: Print the branch currently working on
+        run: echo "BRANCH_NAME=${{ matrix.branch-name }}"
+      - name: Check out the branch
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Windows App
+        run: |
+          pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-arm
+
+      - name: Pack Windows App
+        run: |
+          cd dist/windows
+          zip -r ../cat-relay-win.zip .
+
+      - name: Attach Windows App to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/cat-relay-win.zip
+          asset_name: cat-relay-win.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
