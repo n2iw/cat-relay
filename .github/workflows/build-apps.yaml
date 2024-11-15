@@ -50,7 +50,7 @@ jobs:
       - name: Pack macOS app - Apple Silicon
         run: |
           cd dist/mac-arm
-          zip -r ../cat-relay-mac-arm.zip CatRelay.app.
+          zip -r ../cat-relay-mac-arm.zip CatRelay.app
         shell: bash
 
       - name: Attache macOS App - Apple Silicon to release
