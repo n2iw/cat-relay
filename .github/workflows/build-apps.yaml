@@ -27,11 +27,19 @@ jobs:
           pip install pyinstaller
 
       - name: Pack source code
-        run: zip -r dist/cat-relay-src.zip .
-
-      - name: Build macOS App - Intel
         run: |
-          pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-x64
+          mkdir -p dist
+          zip -r dist/cat-relay-src.zip .
+
+      - name: Attache source code to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/cat-relay-src.zip
+          asset_name: cat-relay-src.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build macOS App - Apple Silicon
         env:
@@ -39,28 +47,11 @@ jobs:
         run: |
           pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-arm
 
-      - name: Pack macOS app - Intel
-        run: |
-          cd dist/mac-x64
-          zip -r ../cat-relay-mac-x64.zip CatRelay.app
-        shell: bash
-
       - name: Pack macOS app - Apple Silicon
         run: |
           cd dist/mac-arm
           zip -r ../cat-relay-mac-arm.zip CatRelay.app.
         shell: bash
-
-
-      - name: Attache macOS App - Intel to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/cat-relay-mac-x64.zip
-          asset_name: cat-relay-mac-x64.zip
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attache macOS App - Apple Silicon to release
         uses: actions/upload-release-asset@v1
@@ -72,12 +63,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Attache source code to release
+      - name: Build macOS App - Intel
+        run: |
+          pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-x64
+
+      - name: Pack macOS app - Intel
+        run: |
+          cd dist/mac-x64
+          zip -r ../cat-relay-mac-x64.zip CatRelay.app
+        shell: bash
+
+      - name: Attache macOS App - Intel to release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/cat-relay-src.zip
-          asset_name: cat-relay-src.zip
+          asset_path: dist/cat-relay-mac-x64.zip
+          asset_name: cat-relay-mac-x64.zip
           asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
