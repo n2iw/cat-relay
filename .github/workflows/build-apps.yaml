@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-macOS-apps:
+  build-macOS-app-apple-silicon:
     runs-on: macos-latest
     steps:
       - name: Print the branch currently working on
@@ -63,6 +63,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  build-macOS-app-intel:
+    runs-on: macos-13
+    steps:
+      - name: Print the branch currently working on
+        run: echo "BRANCH_NAME=${{ matrix.branch-name }}"
+      - name: Check out the branch
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
       - name: Build macOS App - Intel
         run: |
           pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-x64
@@ -110,7 +131,7 @@ jobs:
       - name: Pack Windows App
         run: |
           cd dist/windows
-          zip -r ../cat-relay-win.zip .
+          Compress-Archive -Path .\* -DestinationPath ../cat-relay-win.zip
 
       - name: Attach Windows App to release
         uses: actions/upload-release-asset@v1
