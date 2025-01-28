@@ -126,7 +126,7 @@ jobs:
 
       - name: Build Windows App
         run: |
-          pyinstaller app.py --name CatRelay --distpath dist/windows
+          pyinstaller app.py --name CatRelay --windowed --distpath dist/windows
 
       - name: Pack Windows App
         run: |
