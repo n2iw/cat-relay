@@ -1,6 +1,7 @@
 import os
 import yaml
 from PySide6.QtCore import QObject, Signal
+from pathlib import Path
 
 SDR_PP = 'SDR++'
 VALID_SDRS = [SDR_PP]
@@ -124,7 +125,7 @@ class Config:
 
         script_dir = os.path.dirname(os.path.realpath(__file__))
         work_dir = os.getcwd()
-        home_dir = os.environ["HOME"]
+        home_dir = Path.home()
         config_file_locations = [work_dir, home_dir, script_dir]
         self.config_file_full_path = None
         self.default_config_file_full_path = os.path.join(home_dir, CONFIG_FILE)
