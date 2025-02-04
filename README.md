@@ -42,9 +42,13 @@ Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel.
 
 Make sure "CAT Port" matches the port number in your radio control software.
 
+#### RUMlogNG
  ![RUMlogNG settings](resources/RUMlogNG-settings.png "RUMlogNG settings")
+#### DXLab Commander 
  ![Commander settings](resources/DXLab-Commander-settings.png "RUMlogNG settings")
+#### Flrig 
  ![Flrig server config screen](resources/Flrig-server-config-screen.png "Flrig Server config screen") 
+#### N1MM+
  ![N1MM+ settings](resources/N1MM-settings.png "N1MM settings")
 
 If you use N1MM+, make sure "Radio Info Port" matches the "radio" port in N1MM+'s "Broadcast Data" configuration page. 
