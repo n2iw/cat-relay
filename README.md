@@ -8,6 +8,7 @@ of your SDR software and your radio transceiver.
 ## Download
 Please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-relay. 
 Mac and Windows versions don't require any installation, you can unzip it and double click to run.
+In some Linux systems, you might have to install libxcb-cursor0.
 
 ## Supported platforms and software
 Cat-relay was written in Python3 and can run on Mac, Windows and Linux. 
