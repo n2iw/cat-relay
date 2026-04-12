@@ -1,3 +1,5 @@
+# This module is not used anymore, but keeping it here for reference.
+
 import pyfldigi
 from utils.tcp_client import TCPClient
 
@@ -21,8 +23,8 @@ VALID_MODES = [
 class FldigiClient(TCPClient):
 
     def __init__(self, ip, port):
-        self.last_mode = None
-        self.last_freq = None
+        self.last_mode: str
+        self.last_freq: int
         self._ip = ip
         self._port = port
         self._sock = None

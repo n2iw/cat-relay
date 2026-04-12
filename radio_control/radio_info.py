@@ -1,6 +1,8 @@
 import logging
 import xml.etree.ElementTree as ET
 
+from .radio_info import RadioInfo
+
 FREQUENCY = 'Freq1'
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ def read_child(data, name):
     return result
 
 
-def get_radio_info(xml_data):
+def get_radio_info(xml_data: str) -> RadioInfo | None:
     root = ET.fromstring(xml_data)
     if root.tag == RadioInfo.TAG_NAME:
         return RadioInfo(root)
@@ -72,5 +74,5 @@ class RadioInfo:
                 if value is not None:
                     self.data[element] = value
         else:
-            raise f'Data received is not a RadioInfo data'
+            raise Exception(f'Data received is not a RadioInfo data')
 

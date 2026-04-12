@@ -80,8 +80,8 @@ class CatRelay(QObject):
         self.sdr_ip = params.sdr_ip
         self.sdr_port = params.sdr_port
 
-        self.cat_client: Client = None
-        self.sdr_client: Client = None
+        self.cat_client: Client|None = None
+        self.sdr_client: Client|None = None
 
     def set_params(self, params):
         self.cat_location = params.cat_location
@@ -158,6 +158,9 @@ class CatRelay(QObject):
 
     def sync(self):
         try:
+            if not self.cat_client or not self.sdr_client:
+                logger.error('Cat or SDR client not connected')
+                return None
             radio_freq = self.cat_client.get_new_freq()
             radio_mode = self.cat_client.get_new_mode()
             if (radio_freq is not None) or (radio_mode is not None):

@@ -1,9 +1,22 @@
 import logging
 import xmlrpc.client
+from requests.exceptions import ConnectionError
+
 from .transport import RequestsTransport
 
 logger = logging.getLogger(__name__)
-from requests.exceptions import ConnectionError
+
+
+def _int_from_xmlrpc(v: object) -> int:
+    """Coerce XML-RPC values (typed as _Marshallable) to int."""
+    if isinstance(v, (bytes, bytearray)):
+        s = v.decode("ascii", errors="replace").strip()
+        return int(float(s))
+    if isinstance(v, str):
+        return int(float(v))
+    if isinstance(v, (int, float)):
+        return int(v)
+    raise TypeError(f"unexpected VFO type from flrig: {type(v)!r}")
 
 ## The following are the valid modes that can be used on my Icom IC-7100. They may require changing for
 ## your radio. Note that we use two dictionaries here: RADIO_TO_SDR converts the string we get from the
@@ -71,11 +84,14 @@ class FlrigClient():
     def close(self):
         self.flrig = None
 
-    def set_freq_mode(self, raw_freq: int | None, mode: str | None = None) -> None:
-        if raw_freq is not None:
-            freq = float(raw_freq) 
-            if freq and self.last_freq != freq:
-                self.flrig.rig.set_frequency(freq)
+    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
+        if not self.flrig:
+            logger.error('Flrig is not connected')
+            return
+
+        if freq is not None:
+            if self.last_freq != freq:
+                self.flrig.rig.set_frequency(float(freq))
                 self.last_freq = freq
 
         if mode is not None and self.last_mode != mode:
@@ -87,14 +103,26 @@ class FlrigClient():
             self.last_mode = mode
 
     def get_new_freq(self) -> int | None:
-        freq = self.flrig.rig.get_vfo()
+        if not self.flrig:
+            logger.error('Flrig is not connected')
+            return None
+        raw = self.flrig.rig.get_vfo()
+        if raw is None:
+            return None
+        freq = _int_from_xmlrpc(raw)
         if freq != self.last_freq:
             self.last_freq = freq
             return freq
         return None
 
     def get_new_mode(self) -> str | None:
-        radiomode = self.flrig.rig.get_mode()
+        if not self.flrig:
+            logger.error('Flrig is not connected')
+            return None
+        raw = self.flrig.rig.get_mode()
+        if raw is None:
+            return None
+        radiomode = str(raw)
         if radiomode != self.last_mode:
             sdrmode = RADIO_TO_SDR.get(radiomode)
             if not sdrmode:

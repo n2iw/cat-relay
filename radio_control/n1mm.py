@@ -7,14 +7,14 @@ from .radio_info import get_radio_info, set_frequency_message
 logger = logging.getLogger(__name__)
 
 
-def parse_frequency_mode(data):
+def parse_frequency_mode(data: str) -> tuple[int | None, str | None]:
     info = get_radio_info(data)
     if info:
         freq = info.get_frequency()
         mode = map_mode(info.get_mode(), freq)
         return freq, mode
     else:
-        return None
+        return None, None
 
 
 # Map 'SSB' to 'USB' or 'LSB' base on frequency
@@ -39,6 +39,9 @@ class N1MMClient:
         self.terminated = False # flag to terminate the thread
 
     def __enter__(self):
+        if not self.listen_sock or not self.send_sock:
+            logger.error('Listen or send socket not created')
+            return None
         self.listen_sock.bind(('0.0.0.0', self.listen_port))
         self.thread = threading.Thread(target=self.listen)
         self.thread.start()
@@ -52,6 +55,9 @@ class N1MMClient:
                 logger.info('Terminated flag detected, terminate the thread')
                 return
             data = self.receive()
+            if not data:
+                logger.error('No data received')
+                continue
             freq, mode = parse_frequency_mode(data)
             if freq:
                 self.last_freq = freq
@@ -62,11 +68,17 @@ class N1MMClient:
             b_msg = bytes(message, 'utf-8')
         else:
             b_msg = message
+        if not self.send_sock:
+            logger.error('Send socket not created')
+            return
         self.send_sock.sendto(b_msg, (self.send_ip,  self.send_port))
 
-    def receive(self):
+    def receive(self) -> str | None:
+        if not self.listen_sock:
+            logger.error('Listen socket not created')
+            return None
         data, addr = self.listen_sock.recvfrom(1024)  # buffer size is 1024 bytes
-        return data
+        return data.decode('utf-8')
 
     def close(self):
         self.terminated = True
@@ -87,10 +99,10 @@ class N1MMClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def get_freq(self):
+    def get_new_freq(self):
         return self.last_freq
 
-    def get_mode(self):
+    def get_new_mode(self):
         return self.last_mode
 
     # set frequency only, mode is not supported in N1MM

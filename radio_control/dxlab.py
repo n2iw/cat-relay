@@ -31,7 +31,7 @@ def parse_mode(message):
         return mode
 
 
-def format_freq(freq: int | None) -> str:
+def format_freq(freq: int) -> str:
     # return f'{freq/1000:,.3f}'
     # has to add leading 0s to make MacLogger DX work, DXlab and RUMlogNG don't need it
     return f'{freq/1000:>010,.3f}'
@@ -59,7 +59,7 @@ class Commander(CATClient):
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         self.send(cmd)
         freq = parse_frequency(self.receive())
-        if freq != self.get_last_freq():
+        if freq and freq != self.get_last_freq():
             self.set_last_freq(freq)
             return freq
         return None
@@ -68,22 +68,23 @@ class Commander(CATClient):
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         self.send(cmd)
         mode = parse_mode(self.receive())
-        if mode != self.get_last_mode():
+        if mode and mode != self.get_last_mode():
             self.set_last_mode(mode)
             return MAP_MODES.get(mode)
         return None
 
-    def set_freq_mode(self, new_freq: int | None, new_mode: str | None = None) -> None:
-        freq = new_freq if new_freq is not None else self.get_last_freq()
+    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
+        frequency = freq if freq is not None else self.get_last_freq()
 
-        if new_mode and self.get_last_mode() != new_mode:
-            parameters = format_command('xcvrfreq', format_freq(freq)) + format_command('xcvrmode', new_mode)
+        if mode and self.get_last_mode() != mode:
+            parameters = format_command('xcvrfreq', format_freq(frequency)) + format_command('xcvrmode', mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
-        elif freq and self.get_last_freq() != freq:
-            parameters = format_command('xcvrfreq', format_freq(freq))
+        elif frequency and self.get_last_freq() != frequency:
+            parameters = format_command('xcvrfreq', format_freq(frequency))
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         else:
             return
         self.send(cmd)
-        self.set_last_mode(new_mode)
-        self.set_last_freq(freq)
+        if mode:
+            self.set_last_mode(mode)
+        self.set_last_freq(frequency)
