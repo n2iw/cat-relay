@@ -11,8 +11,11 @@
 ## software that implements the f, m, F, and M Hamlib functions that 
 ## read and write the frequency and mode.
 
+import logging
 import re
 from utils.cat_client import CATClient
+
+logger = logging.getLogger(__name__)
 
 
 def parse_frequency(message):
@@ -72,7 +75,7 @@ class HamLibClient(CATClient):
             if parse_result(result):
                 self.set_last_mode(mode)
             else:
-                print(f'Set Hamlib to {mode} mode failed!')
+                logger.error('Set Hamlib to %s mode failed!', mode)
 
         if freq and self.get_last_freq() != freq:
             message = f'F {freq}\n'
@@ -81,7 +84,7 @@ class HamLibClient(CATClient):
             if parse_result(result):
                 self.set_last_freq(freq)
             else:
-                print(f'Set Hamlib to {freq}Hz failed!')
+                logger.error('Set Hamlib to %s Hz failed!', freq)
 
     def get_freq(self):
         message = f'f\n'

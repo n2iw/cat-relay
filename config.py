@@ -1,3 +1,4 @@
+import logging
 import os
 import yaml
 from PySide6.QtCore import QObject, Signal
@@ -34,6 +35,9 @@ NETWORK = 'Another computer'
 VALID_LOCATIONS = [LOCAL, NETWORK]
 
 LOCAL_HOST = '127.0.0.1'
+
+logger = logging.getLogger(__name__)
+
 
 class Parameters(QObject):
     # Qt Signals
@@ -133,14 +137,14 @@ class Config:
             config_file_full_path = os.path.join(location, CONFIG_FILE)
             if os.path.isfile(config_file_full_path):
                 try:
-                    print(f'Config file {config_file_full_path} found, reading configuration...')
+                    logger.info('Config file %s found, reading configuration...', config_file_full_path)
                     with open(config_file_full_path) as c_file:
                         file_config = yaml.safe_load(c_file)
                         self.update_params_from(file_config)
                         self.config_file_full_path = config_file_full_path
                         break
-                except Exception as e:
-                    print(e)
+                except Exception:
+                    logger.exception('Failed to read config file %s', config_file_full_path)
 
     def update_params_from(self, params_dict):
         self.params.sdr_software = params_dict.get(SDR_SOFTWARE, self.params.sdr_software)
@@ -175,10 +179,10 @@ class Config:
         # Updating existing config file
         if self.config_file_full_path and os.path.isfile(self.config_file_full_path):
             config_file_path = self.config_file_full_path
-            print(f'Updating config file at {config_file_path}')
-        else: # create a new config file in HOME folder
-            print(f'Creating new config file at {config_file_path}')
+            logger.info('Updating config file at %s', config_file_path)
+        else:
             config_file_path = self.default_config_file_full_path
+            logger.info('Creating new config file at %s', config_file_path)
 
         with open(config_file_path, 'w') as c_file:
             yaml_str = yaml.dump(self.get_data())

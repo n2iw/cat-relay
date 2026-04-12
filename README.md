@@ -22,6 +22,7 @@ Cat-relay supports following radio control software:
 * Flrig (cross platform)
 * DXLab Commander (Windows)
 * N1MM+ (Windows) 
+n
 
 Cat-relay may also work with other radio control software if they provide one of two interfaces:
 * A DXLab Commander compatible TCP interface. 
@@ -67,6 +68,20 @@ Number of seconds before retry a failed connection. The default (10 seconds) sho
 ### 4. Sync Interval
 Number of seconds between Cat-relay syncs your SDR and radio. The default (0.1 seconds) should work fine for most people. 
 Increase this number if you notice your computer is not very responsive. It is not recommended to set this to less than 0.05.
+
+## Logging
+
+Cat-relay writes rotating log files named `cat-relay.log`. The directory is computed with [platformdirs](https://pypi.org/project/platformdirs/) as `user_log_dir("cat-relay", "N2IW")` (app name **cat-relay**, author **N2IW**).
+
+Typical full paths:
+
+- **macOS**: `~/Library/Logs/cat-relay/cat-relay.log`
+- **Windows**: `%LOCALAPPDATA%\N2IW\cat-relay\Logs\cat-relay.log` (for example under `C:\Users\<you>\AppData\Local\`)
+- **Linux**: `~/.local/state/cat-relay/log/cat-relay.log` (or under `$XDG_STATE_HOME` when that variable is set)
+
+When a log file grows large it is rotated; you may also see `cat-relay.log.1`, `cat-relay.log.2`, and so on in the same folder.
+
+Messages are logged to this file and, when standard output is available (for example when you run from a terminal), to the console as well. If you report an issue, attaching the current `cat-relay.log` helps with diagnosis.
 
 ## Run from source code
 For Mac and Windows users, please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-relay.

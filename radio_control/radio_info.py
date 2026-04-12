@@ -1,6 +1,9 @@
+import logging
 import xml.etree.ElementTree as ET
 
 FREQUENCY = 'Freq1'
+
+logger = logging.getLogger(__name__)
 
 APP_NAME = 'Cat-Relay'
 
@@ -19,7 +22,7 @@ def get_radio_info(xml_data):
     if root.tag == RadioInfo.TAG_NAME:
         return RadioInfo(root)
     else:
-        print(f'"{root.tag}" tag received, but not supported!')
+        logger.warning('"%s" tag received, but not supported!', root.tag)
 
     return None
 

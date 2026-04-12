@@ -1,7 +1,10 @@
+import logging
 import socket
 import threading
 
 from .radio_info import get_radio_info, set_frequency_message
+
+logger = logging.getLogger(__name__)
 
 
 def parse_frequency_mode(data):
@@ -43,10 +46,10 @@ class N1MMClient:
 
     # This function will be running in a separate thread and updates self.last_mode and self.last_freq
     def listen(self):
-        print(f'listening UDP in a new thread')
+        logger.info('listening UDP in a new thread')
         while True:
             if self.terminated:
-                print(f'Terminated flag detected, terminate the thread')
+                logger.info('Terminated flag detected, terminate the thread')
                 return
             data = self.receive()
             freq, mode = parse_frequency_mode(data)
@@ -92,7 +95,7 @@ class N1MMClient:
 
     # set frequency only, mode is not supported in N1MM
     def set_freq_mode(self, freq, mode=None):
-        print(f'Set freq: {freq}, mode: {mode}')
+        logger.info('Set freq: %s, mode: %s', freq, mode)
         cmd = set_frequency_message(freq)
         if cmd:
             self.last_freq = freq

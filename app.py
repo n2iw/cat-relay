@@ -1,4 +1,9 @@
+import logging
 import sys
+
+from utils.log_config import setup_logging
+
+setup_logging()
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QCheckBox
@@ -7,6 +12,8 @@ from PySide6.QtCore import QTimer, Qt, Slot
 from cat_relay import CatRelay, MESSAGE, CHANGED
 from config import Config, Parameters
 from settings import Settings
+
+logger = logging.getLogger(__name__)
 
 CONNECT = 'Connect'
 DISCONNECT = 'Disconnect'
@@ -92,8 +99,8 @@ class MainWindow(QMainWindow):
             # Reconnect later
             if self.auto_connect:
                 message = 'Connection failed, will try connect later'
-                print(message)
-                print('-' * 40)
+                logger.info(message)
+                logger.info('-' * 40)
                 self.connect_cat_relay_later(message)
 
     def auto_connect_changed(self, state):
@@ -104,13 +111,13 @@ class MainWindow(QMainWindow):
 
     def update_params(self, params):
         if isinstance(params, Parameters):
-            print('Parameters updated')
+            logger.info('Parameters updated')
             self.config.params = params
             self.config.save_to_file()
             if self.cat_relay:
                 self.cat_relay.set_params(params)
         else:
-            print(f'Unknown params object {params}')
+            logger.warning('Unknown params object %s', params)
 
     def open_settings(self):
         # save previous setting and temporarily disable auto connect
@@ -133,7 +140,7 @@ class MainWindow(QMainWindow):
             else:
                 self.connection_label.setText("Connection failed")
         else:
-            print("Cat Relay object doesn't exist!")
+            logger.error("Cat Relay object doesn't exist!")
             sys.exit()
 
     def disconnect_cat_relay(self):

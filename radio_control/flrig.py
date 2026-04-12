@@ -1,5 +1,8 @@
+import logging
 import xmlrpc.client
 from .transport import RequestsTransport
+
+logger = logging.getLogger(__name__)
 from requests.exceptions import ConnectionError
 
 ## The following are the valid modes that can be used on my Icom IC-7100. They may require changing for
@@ -57,8 +60,8 @@ class FlrigClient():
         try:
             self.flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
         except ConnectionError as e:
-            print(e)
-            print("Are you sure flrig is running?")
+            logger.error('%s', e)
+            logger.error('Are you sure flrig is running?')
         return self
 
     def __exit__(self, a, b, c):
@@ -74,8 +77,11 @@ class FlrigClient():
             self.last_freq = freq
 
         if mode and self.last_mode != mode:
-            radiomode = SDR_TO_RADIO[mode]
-            self.flrig.rig.set_mode(radiomode)
+            sdr_mode = SDR_TO_RADIO.get(mode)
+            if not sdr_mode:
+                logger.warning(f'Unknown SDR Mode: {mode}')
+                return None
+            self.flrig.rig.set_mode(sdr_mode)
             self.last_mode = mode
 
     def get_last_freq(self):
@@ -90,6 +96,9 @@ class FlrigClient():
 
     def get_mode(self):
         radiomode = self.flrig.rig.get_mode()
-        sdrmode = RADIO_TO_SDR[radiomode]
+        sdrmode = RADIO_TO_SDR.get(radiomode)
+        if not sdrmode:
+            logger.warning(f'Unknown Radiomode: {radiomode}')
+            return None
         self.last_mode = sdrmode
         return self.get_last_mode()

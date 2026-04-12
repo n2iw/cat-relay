@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox
@@ -7,6 +8,8 @@ from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
 from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, VALID_SDRS, SDR_PP, N1MM, VALID_LOCATIONS, LOCAL, NETWORK
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(QDialog):
@@ -73,25 +76,25 @@ class Settings(QDialog):
 
     @Slot(str)
     def sdr_location_changed(self, location):
-        print(f'Received SDR Location signal: {location}')
+        logger.info('Received SDR Location signal: %s', location)
         self.sdr_ip_widget.set_visibility(location == NETWORK)
 
     @Slot(str)
     def cat_location_changed(self, location):
-        print(f'Received CAT Location signal: {location}')
+        logger.info('Received CAT Location signal: %s', location)
         self.cat_ip_widget.set_visibility(location == NETWORK)
 
     @Slot(str)
     def cat_software_changed(self, software):
-        print(f'Received Cat software signal: {software}')
+        logger.info('Received Cat software signal: %s', software)
         self.radio_info_widget.set_visibility(software == N1MM)
 
     def accept(self):
         if hasattr(self.parent_window, "update_params"):
             if self.params.cat_software == PLACEHOLDER_SOFTWARE:
-                print('Please select a CAT Software')
+                logger.warning('Please select a CAT Software')
                 return
             self.parent_window.update_params(self.params)
         else:
-            print("Unknown parent window, do nothing")
+            logger.warning('Unknown parent window, do nothing')
         super().accept()

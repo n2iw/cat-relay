@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import logging
 import sys
 import time
 
 from PySide6.QtCore import QObject, Signal
+
+from utils.log_config import setup_logging
 
 from sdr_control.hamlib import HamLibClient
 from radio_control.dxlab import Commander
@@ -11,6 +14,8 @@ from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
 
 from config import Config, DXLAB, N1MM, FLRIG, RUMLOG, NETWORK, LOCAL_HOST
+
+logger = logging.getLogger(__name__)
 
 MODE = "mode"
 FREQUENCY = "frequency"
@@ -70,13 +75,13 @@ class CatRelay(QObject):
     def connect_clients(self):
         try:
             self.cat_client = self._connect_cat()
-            print(f'Cat Software connected')
+            logger.info('Cat Software connected')
 
             self.sdr_client = self._connect_sdr()
-            print(f'SDR connected.')
+            logger.info('SDR connected.')
 
-        except Exception as e:
-            print(e)
+        except Exception:
+            logger.exception('Connection failed')
             self.disconnect_clients()
 
         finally:
@@ -91,12 +96,12 @@ class CatRelay(QObject):
         if self.cat_client:
             self.cat_client.close()
             self.cat_client = None
-            print(f'Cat Software disconnected')
+            logger.info('Cat Software disconnected')
 
         if self.sdr_client:
             self.sdr_client.close()
             self.sdr_client = None
-            print(f'SDR disconnected.')
+            logger.info('SDR disconnected.')
 
         new_state = self.is_connected()
         if old_state != new_state:
@@ -107,23 +112,23 @@ class CatRelay(QObject):
 
     def _connect_sdr(self):
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
-        print(f'Connecting to {self.sdr_software} at {ip_address}:{self.sdr_port}')
+        logger.info('Connecting to %s at %s:%s', self.sdr_software, ip_address, self.sdr_port)
         return HamLibClient(ip_address, self.sdr_port).__enter__()
 
     def _connect_cat(self):
         ip_address = self.cat_ip if self.cat_location == NETWORK else LOCAL_HOST
         if self.cat_software in [DXLAB, RUMLOG] :
-            print(f'Connecting to {self.cat_software} at {ip_address}:{self.cat_port}')
+            logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
             return  Commander(ip_address, self.cat_port).__enter__()
         elif self.cat_software == N1MM:
-            print(f'Connecting to {self.cat_software} at {ip_address}:{self.cat_port}')
+            logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
             return N1MMClient(self.radio_info_port, ip_address, self.cat_port).__enter__()
         elif self.cat_software == FLRIG:
-            print(f'Connecting to {self.cat_software} at {ip_address}:{self.cat_port}')
+            logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
             return FlrigClient(ip_address, self.cat_port).__enter__()
         else:
             message = f'Cat software "{self.cat_software}" is not supported!'
-            print(message)
+            logger.error(message)
             raise Exception(message)
 
     def sync(self):
@@ -142,13 +147,14 @@ class CatRelay(QObject):
                     self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
                     return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
             return sync_result(False)
-        except Exception as e:
-            print(e)
+        except Exception:
+            logger.exception('Sync failed')
             self.connection_state_changed.emit(self.is_connected())
             return None
 
 
 if __name__ == '__main__':
+    setup_logging()
     # reconnect every RETRY_TIME seconds, until user press Ctrl+C
     params = Config().params
     while True:
@@ -159,20 +165,20 @@ if __name__ == '__main__':
                 result = cat_relay.sync()
                 if result:
                     if result[CHANGED]:
-                        print(result[MESSAGE])
+                        logger.info(result[MESSAGE])
                 else:
-                    print('Sync failed')
+                    logger.warning('Sync failed')
                 time.sleep(params.sync_interval)
 
         except KeyboardInterrupt as ke:
-            print("\nTerminated by user.")
+            logger.info('Terminated by user.')
             cat_relay = None
             sys.exit()
-        except Exception as e:
+        except Exception:
             retry_time = params.reconnect_time
-            print(e)
-            print(f'Retry in {retry_time} seconds ...')
-            print('Press Ctrl+C to exit')
+            logger.exception('Error in main loop')
+            logger.info('Retry in %s seconds ...', retry_time)
+            logger.info('Press Ctrl+C to exit')
             time.sleep(retry_time)
 
 
