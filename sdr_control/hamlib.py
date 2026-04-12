@@ -69,13 +69,16 @@ class HamLibClient(CATClient):
 
     def set_freq_mode(self, freq, mode=None):
         if mode and self.get_last_mode() != mode:
-            message = f'M {mode} -1\n'
-            self.send(message)
-            result = self.receive()
-            if parse_result(result):
-                self.set_last_mode(mode)
+            if mode not in VALID_MODES:
+                logger.warning(f'Unsupported Mode: {mode}')
             else:
-                logger.error('Set Hamlib to %s mode failed!', mode)
+                message = f'M {mode} -1\n'
+                self.send(message)
+                result = self.receive()
+                if parse_result(result):
+                    self.set_last_mode(mode)
+                else:
+                    logger.error('Set Hamlib to %s mode failed!', mode)
 
         if freq and self.get_last_freq() != freq:
             message = f'F {freq}\n'
