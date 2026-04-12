@@ -83,7 +83,7 @@ HAMLIB_VALID_MODES = [
 
 class HamLibClient(CATClient):
 
-    def set_freq_mode(self, freq: int, mode: str = None) -> None:
+    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
         if mode and self.get_last_mode() != mode:
             valid_mode = mode if mode in SDRPP_VALID_MODES else None
             if not valid_mode:
@@ -111,14 +111,20 @@ class HamLibClient(CATClient):
             else:
                 logger.error('Set Hamlib to %s Hz failed!', freq)
 
-    def get_freq(self):
+    def get_new_freq(self) -> int | None:
         message = f'f\n'
         self.send(message)
-        self.set_last_freq(parse_frequency(self.receive()))
-        return self.get_last_freq()
+        freq = parse_frequency(self.receive())
+        if freq != self.get_last_freq():
+            self.set_last_freq(freq)
+            return freq
+        return None
 
-    def get_mode(self):
+    def get_new_mode(self) -> str | None:
         message = f'm\n'
         self.send(message)
-        self.set_last_mode(self.map_mode(parse_mode(self.receive())))
-        return self.get_last_mode()
+        mode = self.map_mode(parse_mode(self.receive())) 
+        if mode != self.get_last_mode():
+            self.set_last_mode(mode)
+            return mode
+        return None

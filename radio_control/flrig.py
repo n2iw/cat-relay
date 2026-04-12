@@ -71,35 +71,35 @@ class FlrigClient():
     def close(self):
         self.flrig = None
 
-    def set_freq_mode(self, raw_freq, mode):
-        freq = float(raw_freq)
-        if freq and self.last_freq != freq:
-            self.flrig.rig.set_frequency(freq)
-            self.last_freq = freq
+    def set_freq_mode(self, raw_freq: int | None, mode: str | None = None) -> None:
+        if raw_freq is not None:
+            freq = float(raw_freq) 
+            if freq and self.last_freq != freq:
+                self.flrig.rig.set_frequency(freq)
+                self.last_freq = freq
 
-        if mode and self.last_mode != mode:
+        if mode is not None and self.last_mode != mode:
             sdr_mode = SDR_TO_RADIO.get(mode)
             if not sdr_mode:
-                logger.warning(f'Unknown SDR Mode: {mode}')
+                logger.warning(f'Unmapped SDR Mode: {mode}')
                 return None
             self.flrig.rig.set_mode(sdr_mode)
             self.last_mode = mode
 
-    def get_last_freq(self):
-        return int(self.last_freq)
+    def get_new_freq(self) -> int | None:
+        freq = self.flrig.rig.get_vfo()
+        if freq != self.last_freq:
+            self.last_freq = freq
+            return freq
+        return None
 
-    def get_last_mode(self):
-        return self.last_mode
-
-    def get_freq(self):
-        self.last_freq = self.flrig.rig.get_vfo()
-        return int(self.last_freq)
-
-    def get_mode(self):
+    def get_new_mode(self) -> str | None:
         radiomode = self.flrig.rig.get_mode()
-        sdrmode = RADIO_TO_SDR.get(radiomode)
-        if not sdrmode:
-            logger.warning(f'Unknown Radiomode: {radiomode}')
-            return None
-        self.last_mode = sdrmode
-        return self.get_last_mode()
+        if radiomode != self.last_mode:
+            sdrmode = RADIO_TO_SDR.get(radiomode)
+            if not sdrmode:
+                logger.warning(f'Unmapped Radio Mode: {radiomode}')
+                return None
+            self.last_mode = sdrmode
+            return sdrmode
+        return None

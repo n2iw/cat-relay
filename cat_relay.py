@@ -12,6 +12,7 @@ from sdr_control.hamlib import HamLibClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
+from utils.client import Client
 
 from config import Config, DXLAB, N1MM, FLRIG, RUMLOG, NETWORK, LOCAL_HOST
 
@@ -24,13 +25,37 @@ SOURCE = "source"
 MESSAGE = 'message'
 CHANGED = 'changed'
 
-def sync_result(changed, source = None, destination = None, frequency = None, mode = None):
+def format_frequency(frequency: int | None) -> str:
+    if frequency is None:
+        return ''
+    hertz = int(frequency)
+    if hertz >= 1_000_000_000:
+        ghz = hertz // 1_000_000_000
+        r = hertz % 1_000_000_000
+        mhz = r // 1_000_000
+        r = r % 1_000_000
+        khz = r // 1_000
+        hz = r % 1_000
+        return f'{ghz}.{mhz:03d}.{khz:03d}.{hz:03d} GHz'
+    if hertz >= 1_000_000:
+        mhz = hertz // 1_000_000
+        r = hertz % 1_000_000
+        khz = r // 1_000
+        hz = r % 1_000
+        return f'{mhz}.{khz:03d}.{hz:03d} MHz'
+    if hertz >= 1_000:
+        khz = hertz // 1_000
+        hz = hertz % 1_000
+        return f'{khz}.{hz:03d} kHz'
+    return f'{hertz} Hz'
+
+def sync_result(changed, source = None, destination = None, frequency = None, mode = None) -> dict:
     result = {
         CHANGED: changed,
     }
     if changed:
         result.update({
-            MESSAGE: f'Sync from {source} to {destination} {frequency}Hz {mode}',
+            MESSAGE: f'Sync from {source} to {destination} {format_frequency(frequency)} {mode if mode is not None else ''}',
             SOURCE: source,
             DESTINATION: destination,
             FREQUENCY: frequency,
@@ -55,8 +80,8 @@ class CatRelay(QObject):
         self.sdr_ip = params.sdr_ip
         self.sdr_port = params.sdr_port
 
-        self.cat_client = None
-        self.sdr_client = None
+        self.cat_client: Client = None
+        self.sdr_client: Client = None
 
     def set_params(self, params):
         self.cat_location = params.cat_location
@@ -110,12 +135,12 @@ class CatRelay(QObject):
     def __del__(self):
         self.disconnect_clients()
 
-    def _connect_sdr(self):
+    def _connect_sdr(self) -> Client:
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
         logger.info('Connecting to %s at %s:%s', self.sdr_software, ip_address, self.sdr_port)
         return HamLibClient(ip_address, self.sdr_port).__enter__()
 
-    def _connect_cat(self):
+    def _connect_cat(self) -> Client:
         ip_address = self.cat_ip if self.cat_location == NETWORK else LOCAL_HOST
         if self.cat_software in [DXLAB, RUMLOG] :
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
@@ -133,17 +158,15 @@ class CatRelay(QObject):
 
     def sync(self):
         try:
-            radio_freq = self.cat_client.get_freq()
-            radio_mode = self.cat_client.get_mode()
-            if (radio_freq and radio_freq != self.sdr_client.get_last_freq() and isinstance(radio_freq, int)) or \
-                    (radio_mode and radio_mode != self.sdr_client.get_last_mode() and isinstance(radio_mode, str)):
+            radio_freq = self.cat_client.get_new_freq()
+            radio_mode = self.cat_client.get_new_mode()
+            if (radio_freq is not None) or (radio_mode is not None):
                 self.sdr_client.set_freq_mode(radio_freq, radio_mode)
                 return sync_result(True, 'radio', 'SDR', radio_freq, radio_mode)
             else:
-                sdr_freq = self.sdr_client.get_freq()
-                sdr_mode = self.sdr_client.get_mode()
-                if (sdr_freq and sdr_freq != self.cat_client.get_last_freq() and isinstance(sdr_freq, int)) or \
-                        (sdr_mode and sdr_mode != self.cat_client.get_last_mode() and isinstance(sdr_mode, str)):
+                sdr_freq = self.sdr_client.get_new_freq()
+                sdr_mode = self.sdr_client.get_new_mode()
+                if (sdr_freq is not None) or (sdr_mode is not None):
                     self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
                     return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
             return sync_result(False)
