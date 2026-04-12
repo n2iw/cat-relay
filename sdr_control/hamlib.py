@@ -41,7 +41,21 @@ def parse_result(message):
         return succeeded == '0'
 
 
-VALID_MODES = [
+# Valid modes for SDR++
+SDRPP_VALID_MODES = [
+    'WFM',
+    'FM',
+    'AM',
+    'USB',
+    'LSB',
+    'DSB',
+    'CW',
+    'RAW'
+]
+
+# Valid modes for Hamlib, but SDR++ doesn't support all of them. So this is just a reference. 
+'''
+HAMLIB_VALID_MODES = [
     'AM',
     'AMS',
     'CW',
@@ -63,22 +77,30 @@ VALID_MODES = [
     'USB',
     'WFM',
 ]
+'''
+
 
 
 class HamLibClient(CATClient):
 
-    def set_freq_mode(self, freq, mode=None):
+    def set_freq_mode(self, freq: int, mode: str = None) -> None:
         if mode and self.get_last_mode() != mode:
-            if mode not in VALID_MODES:
+            valid_mode = mode if mode in SDRPP_VALID_MODES else None
+            if not valid_mode:
+                for supported_mode in SDRPP_VALID_MODES:
+                    if supported_mode in mode:
+                        valid_mode = supported_mode
+                        break
+            if not valid_mode:
                 logger.warning(f'Unsupported Mode: {mode}')
             else:
-                message = f'M {mode} -1\n'
+                message = f'M {valid_mode} -1\n'
                 self.send(message)
                 result = self.receive()
                 if parse_result(result):
-                    self.set_last_mode(mode)
+                    self.set_last_mode(valid_mode)
                 else:
-                    logger.error('Set Hamlib to %s mode failed!', mode)
+                    logger.error('Set Hamlib to %s mode failed!', valid_mode)
 
         if freq and self.get_last_freq() != freq:
             message = f'F {freq}\n'

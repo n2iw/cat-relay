@@ -20,7 +20,7 @@ RADIO_TO_SDR = {
  'AM':'AM',
  'CW':'CW',
  'RTTY':'USB',
- 'FM':'NFM',
+ 'FM':'FM',
  'WFM':'WFM',
  'CW-R':'CW',
  'RTTY-R':'USB',
@@ -28,15 +28,16 @@ RADIO_TO_SDR = {
  'LSB-D':'LSB',
  'USB-D':'USB',
  'AM-D':'AM',
- 'FM-D':'NFM'
+ 'FM-D':'FM',
+ 'FSK':'USB'
 }
 
 SDR_TO_RADIO = {
- 'LSB':'LSB-D',
- 'USB':'USB-D',
- 'AM':'AM-D',
+ 'LSB':'LSB',
+ 'USB':'USB',
+ 'AM':'AM',
  'DSB':'AM',
- 'NFM':'FM',
+ 'FM':'FM',
  'WFM':'WFM',
  'CW':'CW',
  'RAW':'USB'
