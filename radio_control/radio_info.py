@@ -1,45 +1,11 @@
 import logging
 import xml.etree.ElementTree as ET
 
-from .radio_info import RadioInfo
-
 FREQUENCY = 'Freq1'
 
 logger = logging.getLogger(__name__)
 
 APP_NAME = 'Cat-Relay'
-
-
-def read_child(data, name):
-    result = None
-    child = data.find(name)
-    if child is not None:
-        result = child.text
-
-    return result
-
-
-def get_radio_info(xml_data: str) -> RadioInfo | None:
-    root = ET.fromstring(xml_data)
-    if root.tag == RadioInfo.TAG_NAME:
-        return RadioInfo(root)
-    else:
-        logger.warning('"%s" tag received, but not supported!', root.tag)
-
-    return None
-
-
-def set_frequency_message(freq):
-    cmd = ET.Element('radio_setfrequency')
-    app = ET.SubElement(cmd, 'app')
-    app.text = APP_NAME
-    radio_nr = ET.SubElement(cmd, 'radionr')
-    radio_nr.text = '1'
-    frequency = ET.SubElement(cmd, 'frequency')
-    frequency.text = f'{freq/1000:.3f}'
-    message = ET.tostring(cmd, xml_declaration=True)
-    return message
-
 
 class RadioInfo:
     TAG_NAME = 'RadioInfo'
@@ -75,4 +41,35 @@ class RadioInfo:
                     self.data[element] = value
         else:
             raise Exception(f'Data received is not a RadioInfo data')
+
+
+def read_child(data, name):
+    result = None
+    child = data.find(name)
+    if child is not None:
+        result = child.text
+
+    return result
+
+
+def get_radio_info(xml_data: str) -> RadioInfo | None:
+    root = ET.fromstring(xml_data)
+    if root.tag == RadioInfo.TAG_NAME:
+        return RadioInfo(root)
+    else:
+        logger.warning('"%s" tag received, but not supported!', root.tag)
+
+    return None
+
+
+def set_frequency_message(freq):
+    cmd = ET.Element('radio_setfrequency')
+    app = ET.SubElement(cmd, 'app')
+    app.text = APP_NAME
+    radio_nr = ET.SubElement(cmd, 'radionr')
+    radio_nr.text = '1'
+    frequency = ET.SubElement(cmd, 'frequency')
+    frequency.text = f'{freq/1000:.3f}'
+    message = ET.tostring(cmd, xml_declaration=True)
+    return message
 

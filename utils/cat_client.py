@@ -27,8 +27,12 @@ class CATClient(ABC, TCPClient):
         pass
 
     def _enter(self):
-        self._last_freq = self.get_new_freq()
-        self._last_mode = self.get_new_mode()
+        new_freq = self.get_new_freq()
+        if new_freq is not None:
+            self._last_freq = new_freq
+        new_mode = self.get_new_mode()
+        if new_mode is not None:
+            self._last_mode = new_mode
 
     def map_mode(self, mode):
         valid_mode = mode
