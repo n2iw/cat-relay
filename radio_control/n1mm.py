@@ -3,6 +3,7 @@ import socket
 import threading
 
 from .radio_info import get_radio_info, set_frequency_message
+from utils.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ def map_mode(mode, freq):
     return mode
 
 
-class N1MMClient:
+class N1MMClient(Client):
     def __init__(self, listen_port, send_ip, send_port):
         self.listen_port = listen_port
         self.send_ip = send_ip
@@ -38,10 +39,10 @@ class N1MMClient:
         self.last_freq = 0
         self.terminated = False # flag to terminate the thread
 
-    def __enter__(self):
+    def __enter__(self) -> 'N1MMClient':
         if not self.listen_sock or not self.send_sock:
             logger.error('Listen or send socket not created')
-            return None
+            raise Exception('Listen or send socket not created')
         self.listen_sock.bind(('0.0.0.0', self.listen_port))
         self.thread = threading.Thread(target=self.listen)
         self.thread.start()
@@ -90,23 +91,17 @@ class N1MMClient:
             self.send_sock.close()
             self.send_sock = None
 
-    def get_last_mode(self):
-        return self.last_mode
-
-    def get_last_freq(self):
-        return self.last_freq
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def get_new_freq(self):
+    def get_new_freq(self) -> int | None:
         return self.last_freq
 
-    def get_new_mode(self):
+    def get_new_mode(self) -> str | None:
         return self.last_mode
 
     # set frequency only, mode is not supported in N1MM
-    def set_freq_mode(self, freq, mode=None):
+    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
         logger.info('Set freq: %s, mode: %s', freq, mode)
         cmd = set_frequency_message(freq)
         if cmd:

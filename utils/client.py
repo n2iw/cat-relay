@@ -2,6 +2,12 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class Client(Protocol):
+    def __enter__(self) -> 'Client':
+        ...
+    
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        ...
+
     def close(self) -> None:
         ...
     

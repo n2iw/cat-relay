@@ -1,30 +1,69 @@
 from utils.tcp_client import TCPClient
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 
-class CATClient(ABC, TCPClient):
-    ALTERNATIVE_MODES = {
-        'RTTY': 'USB',  # RTTY mode from radio will be mapped to USB mode
-        'WFM': 'FM',  # WFM mode from SDR++ will be mapped to FM mode
-        'RAW': None,  # RAW mode from SDR++ will be disabled
-        'DSB': None  # DSB mode from SDR++ will be disabled
-    }
+class CATClient(TCPClient):
+    # Support modes, it's subset of SDR++ valid modes
+    CORE_MODES = [
+        'WFM',
+        'FM',
+        'AM',
+        'USB',
+        'LSB',
+        'CW'
+    ]
 
-    def __init__(self, ip, port):
-        super().__init__(ip, port)
-        self._last_mode = ''
-        self._last_freq = 0
-    
     @abstractmethod
-    def get_new_freq(self) -> int | None:
+    def get_native_to_core_mode_mapping(self) -> dict[str, str]:
+        '''
+        :return: dictionary of modes mapping from native mode to core mode
+        subclass should implement this method
+        '''
         pass
 
     @abstractmethod
-    def get_new_mode(self) -> str | None:
+    def get_freq(self) -> int | None:
+        '''
+        :return: current frequency on the device in Hz, None if not available
+        subclass should implement this method
+        '''
+        pass
+
+    @abstractmethod
+    def get_mode(self) -> str | None:
+        '''
+        :return: current mode on the device, None if not available, 
+        subclass should implement this method
+        '''
         pass
 
     @abstractmethod
     def set_freq_mode(self, freq: int | None, mode: str | None) -> None:
         pass
+
+    def __init__(self, ip, port):
+        super().__init__(ip, port)
+        self._last_mode = ''
+        self._last_freq = 0
+
+    def get_new_freq(self) -> int | None:
+        '''
+        :return: new frequency in Hz if it has changed since last time it was stored in self._last_freq
+        '''
+        freq = self.get_freq()
+        if freq and freq != self.get_last_freq():
+            self.set_last_freq(freq)
+            return freq
+        return None
+    
+    def get_new_mode(self) -> str | None:
+        '''
+        :return: new core mode if it has changed since last time it was stored in self._last_mode
+        '''
+        mode = self.get_mode()
+        if mode and mode != self.get_last_mode():
+            self.set_last_mode(mode)
+            return self.native_to_core_mode(mode)
+        return None
 
     def _enter(self):
         new_freq = self.get_new_freq()
@@ -33,13 +72,6 @@ class CATClient(ABC, TCPClient):
         new_mode = self.get_new_mode()
         if new_mode is not None:
             self._last_mode = new_mode
-
-    def map_mode(self, mode):
-        valid_mode = mode
-        if mode in self.ALTERNATIVE_MODES:
-            valid_mode = self.ALTERNATIVE_MODES[mode]
-
-        return valid_mode
 
     def set_last_mode(self, mode: str) -> None:
         if mode:
@@ -54,3 +86,15 @@ class CATClient(ABC, TCPClient):
 
     def get_last_freq(self) -> int:
         return self._last_freq
+
+    def native_to_core_mode(self, mode: str | None) -> str | None:
+        '''
+        :param mode: native mode from the device 
+        :return: equivalent core mode
+        if mode is not in the mapping, return mode itself
+        '''
+        if mode:
+            alternative_modes = self.get_native_to_core_mode_mapping()
+            return alternative_modes.get(mode, mode)
+
+        return None

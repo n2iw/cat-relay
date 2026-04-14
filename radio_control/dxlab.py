@@ -36,48 +36,39 @@ def format_freq(freq: int) -> str:
     # has to add leading 0s to make MacLogger DX work, DXlab and RUMlogNG don't need it
     return f'{freq/1000:>010,.3f}'
 
-
-
-
-MAP_MODES = {
-    'AM': 'AM',
-    'CW': 'CW',
-    'CW-R': 'CW',
-    'DATA-L': 'LSB',
-    'DATA-U': 'USB',
-    'FM': 'FM',
-    'LSB': 'LSB',
-    'RTTY': 'USB',
-    'RTTY-R': 'LSB',
-    'USB': 'USB',
-    'WBFM': 'WFM'
-}
-
-
 class Commander(CATClient):
-    def get_new_freq(self) -> int | None:
+    NATIVE_TO_CORE_MODES = {
+        'CW-R': 'CW',
+        'DATA-L': 'LSB',
+        'DATA-U': 'USB',
+        'RTTY': 'USB',
+        'RTTY-R': 'LSB',
+        'WBFM': 'WFM'
+    }
+
+    CORE_TO_NATIVE_MODES = {
+        'WFM': 'WBFM'
+    }
+
+    def get_native_to_core_mode_mapping(self) -> dict[str, str]:
+        return self.NATIVE_TO_CORE_MODES
+
+    def get_freq(self) -> int | None:
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         self.send(cmd)
-        freq = parse_frequency(self.receive())
-        if freq and freq != self.get_last_freq():
-            self.set_last_freq(freq)
-            return freq
-        return None
+        return parse_frequency(self.receive())
 
-    def get_new_mode(self) -> str | None:
+    def get_mode(self) -> str | None:
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         self.send(cmd)
-        mode = parse_mode(self.receive())
-        if mode and mode != self.get_last_mode():
-            self.set_last_mode(mode)
-            return MAP_MODES.get(mode)
-        return None
+        return parse_mode(self.receive())
 
     def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
         frequency = freq if freq is not None else self.get_last_freq()
+        native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode) if mode else None
 
-        if mode and self.get_last_mode() != mode:
-            parameters = format_command('xcvrfreq', format_freq(frequency)) + format_command('xcvrmode', mode)
+        if native_mode and self.get_last_mode() != native_mode:
+            parameters = format_command('xcvrfreq', format_freq(frequency)) + format_command('xcvrmode', native_mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
         elif frequency and self.get_last_freq() != frequency:
             parameters = format_command('xcvrfreq', format_freq(frequency))
@@ -85,6 +76,6 @@ class Commander(CATClient):
         else:
             return
         self.send(cmd)
-        if mode:
-            self.set_last_mode(mode)
+        if native_mode:
+            self.set_last_mode(native_mode)
         self.set_last_freq(frequency)

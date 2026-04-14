@@ -41,17 +41,7 @@ def parse_result(message):
         return succeeded == '0'
 
 
-# Valid modes for SDR++
-SDRPP_VALID_MODES = [
-    'WFM',
-    'FM',
-    'AM',
-    'USB',
-    'LSB',
-    'DSB',
-    'CW',
-    'RAW'
-]
+
 
 # Valid modes for Hamlib, but SDR++ doesn't support all of them. So this is just a reference. 
 '''
@@ -82,12 +72,28 @@ HAMLIB_VALID_MODES = [
 
 
 class HamLibClient(CATClient):
+    # Valid modes for SDR++
+    SDRPP_VALID_MODES = [
+        'WFM',
+        'FM',
+        'AM',
+        'USB',
+        'LSB',
+        'DSB',
+        'CW',
+        'RAW'
+    ]
+
+    NATIVE_TO_CORE_MODE_MAPPING = {
+        'RAW': None,  # RAW mode from SDR++ will be disabled
+        'DSB': 'AM'  # DSB mode from SDR++ will be converted to AM mode
+    }
 
     def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
         if mode and self.get_last_mode() != mode:
-            valid_mode = mode if mode in SDRPP_VALID_MODES else None
+            valid_mode = mode if mode in self.SDRPP_VALID_MODES else None
             if not valid_mode:
-                for supported_mode in SDRPP_VALID_MODES:
+                for supported_mode in self.SDRPP_VALID_MODES:
                     if supported_mode in mode:
                         valid_mode = supported_mode
                         break
@@ -111,20 +117,18 @@ class HamLibClient(CATClient):
             else:
                 logger.error('Set Hamlib to %s Hz failed!', freq)
 
-    def get_new_freq(self) -> int | None:
+    def get_freq(self) -> int | None:
         message = f'f\n'
         self.send(message)
         freq = parse_frequency(self.receive())
-        if freq != self.get_last_freq():
-            self.set_last_freq(freq)
-            return freq
-        return None
+        return freq
 
-    def get_new_mode(self) -> str | None:
+    def get_mode(self) -> str | None:
         message = f'm\n'
         self.send(message)
-        mode = self.map_mode(parse_mode(self.receive())) 
-        if mode != self.get_last_mode():
-            self.set_last_mode(mode)
-            return mode
-        return None
+        mode = parse_mode(self.receive()) 
+        return mode
+
+
+    def get_native_to_core_mode_mapping(self) -> dict[str, str]:
+        return self.NATIVE_TO_CORE_MODE_MAPPING

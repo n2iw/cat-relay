@@ -1,6 +1,7 @@
 import logging
 import xmlrpc.client
 from requests.exceptions import ConnectionError
+from utils.client import Client
 
 from .transport import RequestsTransport
 
@@ -27,37 +28,29 @@ def _int_from_xmlrpc(v: object) -> int:
 ## instead of "USB" to "USB-D" because USB-D is meant for digital decoding and may mute the rig microphone,
 ## depending on how you have your USB connection set on the radio. The same is true for "LSB" and "AM" modes.
 
-RADIO_TO_SDR = {
- 'LSB':'LSB',
- 'USB':'USB',
- 'AM':'AM',
- 'CW':'CW',
- 'RTTY':'USB',
- 'FM':'FM',
- 'WFM':'WFM',
- 'CW-R':'CW',
- 'RTTY-R':'USB',
- 'DV':'NFM',
- 'LSB-D':'LSB',
- 'USB-D':'USB',
- 'AM-D':'AM',
- 'FM-D':'FM',
- 'FSK':'USB'
-}
 
-SDR_TO_RADIO = {
- 'LSB':'LSB',
- 'USB':'USB',
- 'AM':'AM',
- 'DSB':'AM',
- 'FM':'FM',
- 'WFM':'WFM',
- 'CW':'CW',
- 'RAW':'USB'
-}
+class FlrigClient(Client):
+    NATIVE_TO_CORE_MODES = {
+        'LSB':'LSB',
+        'USB':'USB',
+        'AM':'AM',
+        'CW':'CW',
+        'FM':'FM',
+        'WFM':'WFM',
+        'CW-R':'CW',
+        'RTTY':'USB',
+        'RTTY-R':'USB',
+        'DV':'NFM',
+        'LSB-D':'LSB',
+        'USB-D':'USB',
+        'AM-D':'AM',
+        'FM-D':'FM',
+        'FSK':'USB'
+    }
 
-    
-class FlrigClient():
+    CORE_TO_NATIVE_MODES = {
+        'WFM': 'FM'
+    }
 
     def __init__(self, ip, port):
         self.last_mode = None
@@ -78,7 +71,7 @@ class FlrigClient():
             logger.error('Are you sure flrig is running?')
         return self
 
-    def __exit__(self, a, b, c):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         return
 
     def close(self):
@@ -94,13 +87,15 @@ class FlrigClient():
                 self.flrig.rig.set_frequency(float(freq))
                 self.last_freq = freq
 
-        if mode is not None and self.last_mode != mode:
-            sdr_mode = SDR_TO_RADIO.get(mode)
-            if not sdr_mode:
-                logger.warning(f'Unmapped SDR Mode: {mode}')
-                return None
-            self.flrig.rig.set_mode(sdr_mode)
-            self.last_mode = mode
+        native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode) if mode else None
+        if not native_mode:
+            return
+        if not native_mode in self.NATIVE_TO_CORE_MODES.keys():
+            logger.warning(f'Unmapped Core Mode: {native_mode}')
+            return None
+        if self.last_mode != native_mode:
+            self.flrig.rig.set_mode(native_mode)
+            self.last_mode = native_mode
 
     def get_new_freq(self) -> int | None:
         if not self.flrig:
@@ -122,12 +117,12 @@ class FlrigClient():
         raw = self.flrig.rig.get_mode()
         if raw is None:
             return None
-        radiomode = str(raw)
-        if radiomode != self.last_mode:
-            sdrmode = RADIO_TO_SDR.get(radiomode)
-            if not sdrmode:
-                logger.warning(f'Unmapped Radio Mode: {radiomode}')
+        native_mode = str(raw)
+        if native_mode != self.last_mode:
+            self.last_mode = native_mode
+            core_mode = self.NATIVE_TO_CORE_MODES.get(native_mode)
+            if not core_mode:
+                logger.warning(f'Unmapped Native Mode: {native_mode}')
                 return None
-            self.last_mode = sdrmode
-            return sdrmode
+            return core_mode
         return None
