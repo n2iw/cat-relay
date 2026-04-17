@@ -13,7 +13,8 @@ class Dropdown(QWidget):
        dropdown = QComboBox()
        if value not in value_list:
            dropdown.addItem(placeholder)
-           handler(placeholder)
+           if handler is not None:
+               handler(placeholder)
 
        for software in value_list:
            dropdown.addItem(software)
@@ -21,7 +22,8 @@ class Dropdown(QWidget):
        if value in value_list:
            dropdown.setCurrentText(value)
 
-       dropdown.currentTextChanged.connect(handler)
+       if handler is not None:
+           dropdown.currentTextChanged.connect(handler)
        layout.addWidget(dropdown)
        dropdown.setDisabled(disabled)
 

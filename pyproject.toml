@@ -5,7 +5,7 @@ description = "Cat-relay is a tool to turn your SDR into a band scope/panadapter
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pyside6~=6.7.2",
+    "pyside6~=6.11.0",
     "platformdirs>=4,<5",
     "pyyaml>=6.0.2",
     "requests>=2.32.3",
