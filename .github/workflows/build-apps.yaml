@@ -1,24 +1,27 @@
-name: Build and Attache Apps
+name: Build and Attach Apps
 on:
   release:
     types: [created]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-macOS-app-apple-silicon:
     runs-on: macos-latest
     steps:
-      - name: Print the branch currently working on
-        run: echo "BRANCH_NAME=${{ matrix.branch-name }}"
+      - name: Print ref and SHA
+        run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
       - name: Install dependencies
         run: |
@@ -31,7 +34,8 @@ jobs:
           mkdir -p dist
           zip -r dist/cat-relay-src.zip .
 
-      - name: Attache source code to release
+      - name: Attach source code to release
+        if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
@@ -43,7 +47,7 @@ jobs:
 
       - name: Build macOS App - Apple Silicon
         env:
-          ARCHFLAGS: "-arch arm64"  # Apple Silicon
+          ARCHFLAGS: "-arch arm64" # Apple Silicon
         run: |
           pyinstaller app.py --name CatRelay --windowed  --distpath dist/mac-arm
 
@@ -53,7 +57,8 @@ jobs:
           zip -r ../cat-relay-mac-arm.zip CatRelay.app
         shell: bash
 
-      - name: Attache macOS App - Apple Silicon to release
+      - name: Attach macOS App - Apple Silicon to release
+        if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
@@ -64,19 +69,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-macOS-app-intel:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
-      - name: Print the branch currently working on
-        run: echo "BRANCH_NAME=${{ matrix.branch-name }}"
+      - name: Print ref and SHA
+        run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
       - name: Install dependencies
         run: |
@@ -94,7 +99,8 @@ jobs:
           zip -r ../cat-relay-mac-x64.zip CatRelay.app
         shell: bash
 
-      - name: Attache macOS App - Intel to release
+      - name: Attach macOS App - Intel to release
+        if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
@@ -107,16 +113,16 @@ jobs:
   build-windows-app:
     runs-on: windows-latest
     steps:
-      - name: Print the branch currently working on
-        run: echo "BRANCH_NAME=${{ matrix.branch-name }}"
+      - name: Print ref and SHA
+        run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
       - name: Install dependencies
         run: |
@@ -134,6 +140,7 @@ jobs:
           Compress-Archive -Path .\* -DestinationPath ../cat-relay-win.zip
 
       - name: Attach Windows App to release
+        if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
