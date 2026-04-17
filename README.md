@@ -1,77 +1,93 @@
-#Cat-relay
+# Cat-Relay
 
 ## About
+
 Cat-relay is a tool to turn your SDR into a band scope/panadapter
 for your radio. It does this by synchronizing the frequencies and modes
-of your SDR software and your radio transceiver.
+between your SDR software and your radio transceiver.
 
 ## Download
-Please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-relay. 
+
+Please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-Relay.
 Mac and Windows versions don't require any installation, you can unzip it and double click to run.
-In some Linux systems, you might have to install libxcb-cursor0.
+Linux users can download the source code version. In some Linux systems, you might have to install libxcb-cursor0.
 
 ## Supported platforms and software
-Cat-relay was written in Python3 and can run on Mac, Windows and Linux. 
-Ready to use executable files are provided for Mac and Windows platforms.
 
-Currently, Cat-relay mainly supports one SDR software - SDR++ (cross-platform). However, Cat-relay may work with other SDR software if they provide a
+Cat-relay was written in Python3 (3.13+) and can run on Mac, Windows and Linux.
+Ready to use executable files are available for Mac and Windows platforms.
+
+Currently, Cat-Relay mainly supports one SDR software - SDR++ (cross-platform). However, Cat-Relay may work with other SDR software if they provide a
 Hamlib/Rigctl compatible TCP server.
 
-Cat-relay supports following radio control software:
-* RUMlogNG (Mac)
-* Flrig (cross platform)
-* DXLab Commander (Windows)
-* N1MM+ (Windows) 
-n
+Cat-Relay supports following radio control software:
 
-Cat-relay may also work with other radio control software if they provide one of two interfaces:
-* A DXLab Commander compatible TCP interface. 
-* A Flrig compatible XML/RPC server.
+- RUMlogNG (Mac)
+- Flrig (cross platform)
+- DXLab Commander (Windows)
+- N1MM+ (Windows)
+
+Cat-Relay may also work with other radio control software if they provide one of two interfaces:
+
+- A DXLab Commander compatible TCP interface.
+- A Flrig compatible XML/RPC server.
 
 At this moment, only SDR++, RUMlogNG, DXLab Commander, Flrig and N1MM+ are
-tested. MacLoggerDX may also work, except changing modes on SDR is not supported by MacLoggerDX. 
+tested. MacLoggerDX may also work, except changing modes on SDR is not supported by MacLoggerDX.
 
 ## Settings
-To change settings, click the "Setting" button on the main window. 
 
- ![Settings](resources/settings.png "Settings")
+To change settings, click the "Setting" button on the main window.
 
-Most settings are self-explanatory. Here are some useful tips: 
+![Settings](resources/settings.png "Settings")
+
+Most settings are self-explanatory. Here are some useful tips:
 
 ### 1. Match the ports
-Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel. 
- ![SDR++ settings](resources/SDR++-settings.png "SDR++ settings") 
+
+Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel.
+![SDR++ settings](resources/SDR++-settings.png "SDR++ settings")
 
 Make sure "CAT Port" matches the port number in your radio control software.
 
 #### RUMlogNG
- ![RUMlogNG settings](resources/RUMlogNG-settings.png "RUMlogNG settings")
-#### DXLab Commander 
- ![Commander settings](resources/DXLab-Commander-settings.png "RUMlogNG settings")
-#### Flrig 
- ![Flrig server config screen](resources/Flrig-server-config-screen.png "Flrig Server config screen") 
+
+![RUMlogNG settings](resources/RUMlogNG-settings.png "RUMlogNG settings")
+
+#### DXLab Commander
+
+![Commander settings](resources/DXLab-Commander-settings.png "RUMlogNG settings")
+
+#### Flrig
+
+![Flrig server config screen](resources/Flrig-server-config-screen.png "Flrig Server config screen")
+
 #### N1MM+
- ![N1MM+ settings](resources/N1MM-settings.png "N1MM settings")
 
-If you use N1MM+, make sure "Radio Info Port" matches the "radio" port in N1MM+'s "Broadcast Data" configuration page. 
-For example, if the "radio" box has "127.0.0.1:12060", put "12060" in Cat-relay's "Radio Info Port" box.
+![N1MM+ settings](resources/N1MM-settings.png "N1MM settings")
 
- ![N1MM+ Broadcast settings](resources/N1MM-radio-info.png "N1MM+ Broadcast settings")
+If you use N1MM+, make sure "Radio Info Port" matches the "radio" port in N1MM+'s "Broadcast Data" configuration page.
+For example, if the "radio" box has "127.0.0.1:12060", put "12060" in Cat-Relay's "Radio Info Port" box.
+
+![N1MM+ Broadcast settings](resources/N1MM-radio-info.png "N1MM+ Broadcast settings")
 
 ### 2. Put in the correct addresses
-If you run all the software on the same computer (most people do), keep "SDR running on" and "CAT running on" as "This computer". 
+
+If you run all the software on the same computer (most people do), keep "SDR running on" and "CAT running on" as "This computer".
 If you run some software on another computer, then make sure you choose "Another computer", and put in the correct IP address.
-   
+
 ### 3. Reconnect Time
-Number of seconds before retry a failed connection. The default (10 seconds) should work fine for most people. 
+
+Number of seconds before retry a failed connection. The default (10 seconds) should work fine in most cases.
 
 ### 4. Sync Interval
-Number of seconds between Cat-relay syncs your SDR and radio. The default (0.1 seconds) should work fine for most people. 
+
+Number of seconds between Cat-Relay syncs your SDR and radio. The default (0.1 seconds) should work fine in most cases.
 Increase this number if you notice your computer is not very responsive. It is not recommended to set this to less than 0.05.
 
 ## Logging
 
-Cat-relay writes rotating log files named `cat-relay.log`. The directory is computed with [platformdirs](https://pypi.org/project/platformdirs/) as `user_log_dir("cat-relay", "N2IW")` (app name **cat-relay**, author **N2IW**).
+Cat-Relay writes rotating log files named `cat-relay.log`. The directory is computed with [platformdirs](https://pypi.org/project/platformdirs/) as `user_log_dir("cat-relay", "N2IW")` (app name **cat-relay**, author **N2IW**).
 
 Typical full paths:
 
@@ -84,18 +100,28 @@ When a log file grows large it is rotated; you may also see `cat-relay.log.1`, `
 Messages are logged to this file and, when standard output is available (for example when you run from a terminal), to the console as well. If you report an issue, attaching the current `cat-relay.log` helps with diagnosis.
 
 ## Run from source code
-For Mac and Windows users, please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-relay.
+
+For Mac and Windows users, please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-Relay.
 If you are using Linux or you prefer running source code, here are some steps you can follow.
 
-### How to install dependencies
-Cat-relay uses only one 3rd party libraries (pyyaml). To install it, open a terminal, go to the folder that contains cat-relay, 
-and run following command:
+### If you use uv
 
-```pip3 install -r requirements.txt```
+The easiest way to run Cat-Relay is using [uv](https://docs.astral.sh/uv/). After installing uv, open a terminal, go to the folder that contains Cat-Relay and runn following command:
 
-### How to run source code
-Open a terminal, go to the folder that contains cat-relay, and run following command:
+`uv run app.py`
 
-```python3 app.py```
+### If you only use pip
+
+#### Install dependencies
+
+To install dependencies (you only need to do this once), open a terminal, go to the folder that contains Cat-Relay and run following command:
+
+`pip3 install -r requirements.txt`
+
+#### Run Cat-Relay source code
+
+Open a terminal, go to the folder that contains Cat-Relay, and run following command:
+
+`python3 app.py`
 
 Don't close the terminal window, you can minimize it if you'd like to.
