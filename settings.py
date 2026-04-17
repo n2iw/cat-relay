@@ -2,12 +2,13 @@ import copy
 import logging
 
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox
+from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QLineEdit
 
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
 from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, VALID_SDRS, SDR_PP, N1MM, VALID_LOCATIONS, LOCAL, NETWORK
+from utils.log_config import LOG_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,9 @@ class Settings(QDialog):
 
         # Set up UI
         self.parent_window = parent
-        self.radio_info_widget = None
-        self.sdr_ip_widget = None
-        self.cat_ip_widget = None
+        self.radio_info_widget: TextInput
+        self.sdr_ip_widget: TextInput
+        self.cat_ip_widget: TextInput
         self.setWindowTitle("Settings")
         self.setLayout(self.create_layout())
 
@@ -66,6 +67,11 @@ class Settings(QDialog):
         # Sync time
         layout.addWidget(DecimalSecondsInput('Sync Interval', self.params.sync_interval, 0.05, 5, 0.01, lambda time: self.params.set_sync_interval(time)))
 
+        layout.addWidget(QLabel('Logs can be found at:'))
+        log_files_line = QLineEdit(str(LOG_DIR))
+        log_files_line.setReadOnly(True)
+        layout.addWidget(log_files_line)
+
         # Action Buttons
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
@@ -90,7 +96,7 @@ class Settings(QDialog):
         self.radio_info_widget.set_visibility(software == N1MM)
 
     def accept(self):
-        if hasattr(self.parent_window, "update_params"):
+        if self.parent_window and hasattr(self.parent_window, "update_params"):
             if self.params.cat_software == PLACEHOLDER_SOFTWARE:
                 logger.warning('Please select a CAT Software')
                 return

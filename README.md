@@ -37,7 +37,7 @@ tested. MacLoggerDX may also work, except changing modes on SDR is not supported
 
 ## Settings
 
-To change settings, click the "Setting" button on the main window.
+To change settings, click the "Settings" button on the main window.
 
 ![Settings](resources/settings.png "Settings")
 
@@ -87,17 +87,7 @@ Increase this number if you notice your computer is not very responsive. It is n
 
 ## Logging
 
-Cat-Relay writes rotating log files named `cat-relay.log`. The directory is computed with [platformdirs](https://pypi.org/project/platformdirs/) as `user_log_dir("cat-relay", "N2IW")` (app name **cat-relay**, author **N2IW**).
-
-Typical full paths:
-
-- **macOS**: `~/Library/Logs/cat-relay/cat-relay.log`
-- **Windows**: `%LOCALAPPDATA%\N2IW\cat-relay\Logs\cat-relay.log` (for example under `C:\Users\<you>\AppData\Local\`)
-- **Linux**: `~/.local/state/cat-relay/log/cat-relay.log` (or under `$XDG_STATE_HOME` when that variable is set)
-
-When a log file grows large it is rotated; you may also see `cat-relay.log.1`, `cat-relay.log.2`, and so on in the same folder.
-
-Messages are logged to this file and, when standard output is available (for example when you run from a terminal), to the console as well. If you report an issue, attaching the current `cat-relay.log` helps with diagnosis.
+Cat-Relay writes rotating log files named `cat-relay.log`. Messages are logged to this file and, when standard output is available (for example when you run from a terminal), to the console as well. If you report an issue, attaching the current `cat-relay.log` helps with diagnosis. Location of the logs is displayed on the bottom of the Settings window.
 
 ## Run from source code
 
