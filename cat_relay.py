@@ -9,7 +9,7 @@ from PySide6.QtCore import QObject, Signal
 from utils.log_config import setup_logging
 
 from sdr_control.sdr_connect import SdrConnectClient
-from sdr_control.hamlib import HamLibClient
+from sdr_control.sdr_pp import SdrPPClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
@@ -142,7 +142,7 @@ class CatRelay(QObject):
         if self.sdr_software == SDR_CONNECT:
             return SdrConnectClient(ip_address, self.sdr_port).__enter__()
         elif self.sdr_software == SDR_PP:
-            return HamLibClient(ip_address, self.sdr_port).__enter__()
+            return SdrPPClient(ip_address, self.sdr_port).__enter__()
         else:
             message = f'SDR software "{self.sdr_software}" is not supported!'
             logger.error(message)

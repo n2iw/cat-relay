@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QL
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
-from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, VALID_SDRS, SDR_PP, N1MM, VALID_LOCATIONS, LOCAL, NETWORK
+from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, VALID_SDRS, SDR_PP, SDR_CONNECT, N1MM, FLRIG, DXLAB, RUMLOG, VALID_LOCATIONS, LOCAL, NETWORK
 from utils.log_config import LOG_DIR
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,9 @@ class Settings(QDialog):
         self.parent_window = parent
         self.radio_info_widget: TextInput
         self.sdr_ip_widget: TextInput
+        self.sdr_port_widget: TextInput
         self.cat_ip_widget: TextInput
+        self.cat_port_widget: TextInput
         self.setWindowTitle("Settings")
         self.setLayout(self.create_layout())
 
@@ -47,7 +49,8 @@ class Settings(QDialog):
         self.sdr_ip_widget = TextInput("SDR IP", self.params.sdr_ip, lambda ip: self.params.set_sdr_ip(ip), self.params.sdr_location == NETWORK)
         layout.addWidget(self.sdr_ip_widget)
         # SDR Port
-        layout.addWidget(TextInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port), True, INTEGER))
+        self.sdr_port_widget = TextInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port), True, INTEGER)
+        layout.addWidget(self.sdr_port_widget)
 
         # CAT Software
         layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_cat_software(software)))
@@ -57,7 +60,8 @@ class Settings(QDialog):
         self.cat_ip_widget = TextInput('CAT IP', self.params.cat_ip, lambda ip: self.params.set_cat_ip(ip), self.params.cat_location == NETWORK)
         layout.addWidget(self.cat_ip_widget)
         # CAT Port
-        layout.addWidget(TextInput('CAT Port', self.params.cat_port, lambda port: self.params.set_cat_port(port), True, INTEGER))
+        self.cat_port_widget = TextInput('CAT Port', self.params.cat_port, lambda port: self.params.set_cat_port(port), True, INTEGER)
+        layout.addWidget(self.cat_port_widget)
 
         # Radio Info Port (only show when it's N1MM)
         self.radio_info_widget = TextInput('Radio Info Port', self.params.radio_info_port, lambda port: self.params.set_radio_info_port(port), self.params.cat_software == N1MM, INTEGER)
@@ -94,12 +98,24 @@ class Settings(QDialog):
     @Slot(str)
     def sdr_software_changed(self, software):
         logger.info('Received SDR software signal: %s', software)
-        # self.radio_info_widget.set_visibility(software == N1MM)
+        if software == SDR_PP:
+            self.sdr_port_widget.line.setText('4532')
+        elif software == SDR_CONNECT:
+            self.sdr_port_widget.line.setText('5454')
 
     @Slot(str)
     def cat_software_changed(self, software):
         logger.info('Received Cat software signal: %s', software)
         self.radio_info_widget.set_visibility(software == N1MM)
+        if software == N1MM:
+            self.cat_port_widget.line.setText('2237')
+            self.radio_info_widget.line.setText('12060')
+        elif software == FLRIG:
+            self.cat_port_widget.line.setText('12345')
+        elif software == DXLAB:
+            self.cat_port_widget.line.setText('52002')
+        elif software == RUMLOG:
+            self.cat_port_widget.line.setText('5555')
 
     def accept(self):
         if self.parent_window and hasattr(self.parent_window, "update_params"):

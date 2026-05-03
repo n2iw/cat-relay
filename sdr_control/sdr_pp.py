@@ -1,11 +1,6 @@
-## While not exactly clear from the file name, this module interacts with the SDR++ app
+## This module is a client for the SDR++ app
 
 ## It is a lightweight substitute for a full Hamlib implementation
-## which has many dependences and would be complete overkill for our use.
-## It supports only three methods:
-##     set_freq_mode, which sets the frequency and mode of the SDR
-##     get_freq, which returns the frequency of the SDR
-##     get_mode, which returns the mode of the SDR
 
 ## As mentioned in the README file, this would probably work with pretty much any SDR
 ## software that implements the f, m, F, and M Hamlib functions that 
@@ -45,8 +40,8 @@ def parse_result(message) -> bool:
 
 
 
-# Valid modes for Hamlib, but SDR++ doesn't support all of them. So this is just a reference. 
 '''
+# Valid modes for Hamlib
 HAMLIB_VALID_MODES = [
     'AM',
     'AMS',
@@ -86,7 +81,7 @@ SDRPP_VALID_MODES = [
 
 
 
-class HamLibClient(CATClient):
+class SdrPPClient(CATClient):
 
     NATIVE_TO_CORE_MODES = {
         'WFM': 'FM',  # WFM mode from SDR Connect will be converted to WFM mode

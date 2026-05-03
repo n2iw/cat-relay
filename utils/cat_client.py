@@ -53,7 +53,7 @@ class CATClient(TCPClient):
         :return: new core mode if it has changed since last time it was stored in self._last_mode
         '''
         native_mode = self.get_mode()
-        mode = self.native_to_core_mode(native_mode, native_mode)
+        mode = self.native_to_core_mode(native_mode)
         if mode and mode != self.get_last_mode():
             self.set_last_mode(mode)
             return mode
@@ -81,7 +81,7 @@ class CATClient(TCPClient):
     def get_last_freq(self) -> int:
         return self._last_freq
 
-    def native_to_core_mode(self, mode: str | None) -> str | None:
+    def native_to_core_mode(self, mode: str | None) -> CoreMode | None:
         '''
         :param mode: native mode from the device 
         :return: equivalent core mode
