@@ -14,11 +14,12 @@
 import logging
 import re
 from utils.cat_client import CATClient
+from utils.client import CoreMode
 
 logger = logging.getLogger(__name__)
 
 
-def parse_frequency(message):
+def parse_frequency(message) -> int | None:
     result = re.match(r"(\d+)\\n", str(message))
     if result:
         freq_str = result.group(1)
@@ -26,7 +27,7 @@ def parse_frequency(message):
             return int(freq_str)
 
 
-def parse_mode(message):
+def parse_mode(message) -> str | None:
     result = re.match(r"(\w+)\\", str(message))
     if result:
         freq_str = result.group(1)
@@ -34,11 +35,12 @@ def parse_mode(message):
             return freq_str
 
 
-def parse_result(message):
+def parse_result(message) -> bool:
     result = re.match(r"RPRT +(\d)\\n", str(message))
     if result:
         succeeded = result.group(1)
         return succeeded == '0'
+    return False
 
 
 
@@ -67,46 +69,44 @@ HAMLIB_VALID_MODES = [
     'USB',
     'WFM',
 ]
+
+#Valid modes for SDR++
+SDRPP_VALID_MODES = [
+    'WFM',
+    'FM',
+    'AM',
+    'USB',
+    'LSB',
+    'DSB',
+    'CW',
+    'RAW'
+]
+
 '''
 
 
 
 class HamLibClient(CATClient):
-    # Valid modes for SDR++
-    SDRPP_VALID_MODES = [
-        'WFM',
-        'FM',
-        'AM',
-        'USB',
-        'LSB',
-        'DSB',
-        'CW',
-        'RAW'
-    ]
 
-    NATIVE_TO_CORE_MODE_MAPPING = {
-        'RAW': None,  # RAW mode from SDR++ will be disabled
-        'DSB': 'AM'  # DSB mode from SDR++ will be converted to AM mode
+    NATIVE_TO_CORE_MODES = {
+        'WFM': 'FM',  # WFM mode from SDR Connect will be converted to WFM mode
+        'DSB': 'AM',  # DSB mode from SDR Connect will be converted to AM mode
+        'RAW': None  # RAW mode from SDR Connect will be disabled
     }
 
-    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
+    CORE_TO_NATIVE_MODES = {
+    }
+
+    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
         if mode and self.get_last_mode() != mode:
-            valid_mode = mode if mode in self.SDRPP_VALID_MODES else None
-            if not valid_mode:
-                for supported_mode in self.SDRPP_VALID_MODES:
-                    if supported_mode in mode:
-                        valid_mode = supported_mode
-                        break
-            if not valid_mode:
-                logger.warning(f'Unsupported Mode: {mode}')
+            native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode)
+            message = f'M {native_mode} -1\n'
+            self.send(message)
+            result = self.receive()
+            if parse_result(result):
+                self.set_last_mode(mode)
             else:
-                message = f'M {valid_mode} -1\n'
-                self.send(message)
-                result = self.receive()
-                if parse_result(result):
-                    self.set_last_mode(valid_mode)
-                else:
-                    logger.error('Set Hamlib to %s mode failed!', valid_mode)
+                logger.error('Set Hamlib to %s mode failed!', mode)
 
         if freq and self.get_last_freq() != freq:
             message = f'F {freq}\n'
@@ -123,12 +123,11 @@ class HamLibClient(CATClient):
         freq = parse_frequency(self.receive())
         return freq
 
-    def get_mode(self) -> str | None:
+    def get_mode(self) -> CoreMode | None:
         message = f'm\n'
         self.send(message)
         mode = parse_mode(self.receive()) 
         return mode
 
-
     def get_native_to_core_mode_mapping(self) -> dict[str, str]:
-        return self.NATIVE_TO_CORE_MODE_MAPPING
+        return self.NATIVE_TO_CORE_MODES

@@ -3,7 +3,7 @@ import socket
 import threading
 
 from .radio_info import get_radio_info, set_frequency_message
-from utils.client import Client
+from utils.client import Client, CoreMode
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +35,10 @@ class N1MMClient(Client):
         self.send_port = send_port
         self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.last_mode = ''
-        self.last_freq = 0
+        self._last_mode = ''
+        self._last_freq = 0
+        self._last_mode_reported = None
+        self._last_freq_reported = None
         self.terminated = False # flag to terminate the thread
 
     def __enter__(self) -> 'N1MMClient':
@@ -61,8 +63,8 @@ class N1MMClient(Client):
                 continue
             freq, mode = parse_frequency_mode(data)
             if freq:
-                self.last_freq = freq
-                self.last_mode = mode
+                self._last_freq = freq
+                self._last_mode = mode
 
     def send(self, message):
         if isinstance(message, str):
@@ -95,16 +97,27 @@ class N1MMClient(Client):
         self.close()
 
     def get_new_freq(self) -> int | None:
-        return self.last_freq
+        if self._last_freq_reported != self._last_freq:
+            self._last_freq_reported = self._last_freq
+            return self._last_freq
+        else:
+            return None
 
     def get_new_mode(self) -> str | None:
-        return self.last_mode
+        if self._last_mode_reported != self._last_mode:
+            self._last_mode_reported = self._last_mode
+            return self._last_mode
+        else:
+            return None
 
     # set frequency only, mode is not supported in N1MM
-    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
+    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
         logger.info('Set freq: %s, mode: %s', freq, mode)
         cmd = set_frequency_message(freq)
         if cmd:
-            self.last_freq = freq
+            self._last_freq = freq
+            self._last_freq_reported = freq
+            self._last_mode = mode
+            self._last_mode_reported = mode
             self.send(cmd)
 

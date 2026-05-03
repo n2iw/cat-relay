@@ -1,4 +1,5 @@
-pyyaml
-requests
+pyyaml>=6.0.2
+requests>=2.32.3
 PySide6~=6.11.0
 platformdirs>=4,<5
+websockets>=16.0

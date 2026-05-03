@@ -1,21 +1,14 @@
 from utils.tcp_client import TCPClient
 from abc import abstractmethod
+from utils.client import CoreMode
 
 class CATClient(TCPClient):
-    # Support modes, it's subset of SDR++ valid modes
-    CORE_MODES = [
-        'WFM',
-        'FM',
-        'AM',
-        'USB',
-        'LSB',
-        'CW'
-    ]
 
     @abstractmethod
     def get_native_to_core_mode_mapping(self) -> dict[str, str]:
         '''
         :return: dictionary of modes mapping from native mode to core mode
+        if a native mode matches core mode, it's ok to don't include it in the mapping
         subclass should implement this method
         '''
         pass
@@ -37,7 +30,7 @@ class CATClient(TCPClient):
         pass
 
     @abstractmethod
-    def set_freq_mode(self, freq: int | None, mode: str | None) -> None:
+    def set_freq_mode(self, freq: int | None, mode: CoreMode | None) -> None:
         pass
 
     def __init__(self, ip, port):
@@ -55,14 +48,15 @@ class CATClient(TCPClient):
             return freq
         return None
     
-    def get_new_mode(self) -> str | None:
+    def get_new_mode(self) -> CoreMode | None:
         '''
         :return: new core mode if it has changed since last time it was stored in self._last_mode
         '''
-        mode = self.get_mode()
+        native_mode = self.get_mode()
+        mode = self.native_to_core_mode(native_mode, native_mode)
         if mode and mode != self.get_last_mode():
             self.set_last_mode(mode)
-            return self.native_to_core_mode(mode)
+            return mode
         return None
 
     def _enter(self):

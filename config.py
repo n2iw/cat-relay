@@ -4,12 +4,14 @@ import yaml
 from PySide6.QtCore import QObject, Signal
 from pathlib import Path
 
+SDR_CONNECT = 'SDR Connect'
 SDR_PP = 'SDR++'
-VALID_SDRS = [SDR_PP]
+VALID_SDRS = [SDR_CONNECT, SDR_PP]
 SDR_SOFTWARE = 'SDR_SOFTWARE'
 SDR_LOCATION = 'SDR_LOCATION'
 SDR_IP = 'SDR_IP'
 SDR_PORT = 'SDR_PORT'
+
 
 CAT_LOCATION = 'CAT_LOCATION'
 CAT_IP = 'CAT_IP'
@@ -42,6 +44,7 @@ logger = logging.getLogger(__name__)
 class Parameters(QObject):
     # Qt Signals
     sdr_location_changed = Signal(str)
+    sdr_software_changed = Signal(str)
     cat_software_changed = Signal(str)
     cat_location_changed = Signal(str)
 
@@ -101,6 +104,11 @@ class Parameters(QObject):
 
     def set_sdr_port(self, port):
         self.sdr_port = port
+
+    def set_sdr_software(self, software):
+        if self.sdr_software != software:
+            self.sdr_software = software
+            self.sdr_software_changed.emit(software)
 
     def set_cat_software(self, software):
         if self.cat_software != software:

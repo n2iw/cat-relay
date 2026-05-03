@@ -1,7 +1,7 @@
 import logging
 import xmlrpc.client
 from requests.exceptions import ConnectionError
-from utils.client import Client
+from utils.client import Client, CoreMode
 
 from .transport import RequestsTransport
 
@@ -56,11 +56,10 @@ class FlrigClient(Client):
         'RTTY-U':'USB',
         'USB':'USB',
         'USB-D':'USB',
-        'WFM':'WFM',
+        'WFM':'FM'
     }
 
     CORE_TO_NATIVE_MODES = {
-        'WFM': 'FM'
     }
 
     def __init__(self, ip, port):
@@ -88,7 +87,7 @@ class FlrigClient(Client):
     def close(self):
         self.flrig = None
 
-    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
+    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
         if not self.flrig:
             logger.error('Flrig is not connected')
             return
@@ -104,9 +103,9 @@ class FlrigClient(Client):
         if not native_mode in self.NATIVE_TO_CORE_MODES.keys():
             logger.warning(f'Unmapped Core Mode: {native_mode}')
             return None
-        if self.last_mode != native_mode:
+        if self.last_mode != mode:
             self.flrig.rig.set_mode(native_mode)
-            self.last_mode = native_mode
+            self.last_mode = mode
 
     def get_new_freq(self) -> int | None:
         if not self.flrig:
@@ -114,6 +113,7 @@ class FlrigClient(Client):
             return None
         raw = self.flrig.rig.get_vfo()
         if raw is None:
+            logger.error('Failed to get frequency from Flrig')
             return None
         freq = _int_from_xmlrpc(raw)
         if freq != self.last_freq:
@@ -127,13 +127,14 @@ class FlrigClient(Client):
             return None
         raw = self.flrig.rig.get_mode()
         if raw is None:
+            logger.error('Failed to get mode from Flrig')
             return None
         native_mode = str(raw)
-        if native_mode != self.last_mode:
-            self.last_mode = native_mode
-            core_mode = self.NATIVE_TO_CORE_MODES.get(native_mode)
-            if not core_mode:
-                logger.warning(f'Unmapped Native Mode: {native_mode}')
-                return None
-            return core_mode
+        mode = self.NATIVE_TO_CORE_MODES.get(native_mode)
+        if not mode:
+            logger.warning(f'Unmapped Native Mode: {native_mode}')
+            return None
+        if mode != self.last_mode:
+            self.last_mode = mode
+            return mode
         return None

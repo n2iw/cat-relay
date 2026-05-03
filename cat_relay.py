@@ -8,13 +8,14 @@ from PySide6.QtCore import QObject, Signal
 
 from utils.log_config import setup_logging
 
+from sdr_control.sdr_connect import SdrConnectClient
 from sdr_control.hamlib import HamLibClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
 from utils.client import Client
 
-from config import Config, DXLAB, N1MM, FLRIG, RUMLOG, NETWORK, LOCAL_HOST
+from config import Config, DXLAB, N1MM, FLRIG, RUMLOG, NETWORK, LOCAL_HOST, SDR_CONNECT, SDR_PP
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +139,14 @@ class CatRelay(QObject):
     def _connect_sdr(self) -> Client:
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
         logger.info('Connecting to %s at %s:%s', self.sdr_software, ip_address, self.sdr_port)
-        return HamLibClient(ip_address, self.sdr_port).__enter__()
+        if self.sdr_software == SDR_CONNECT:
+            return SdrConnectClient(ip_address, self.sdr_port).__enter__()
+        elif self.sdr_software == SDR_PP:
+            return HamLibClient(ip_address, self.sdr_port).__enter__()
+        else:
+            message = f'SDR software "{self.sdr_software}" is not supported!'
+            logger.error(message)
+            raise Exception(message)
 
     def _connect_cat(self) -> Client:
         ip_address = self.cat_ip if self.cat_location == NETWORK else LOCAL_HOST

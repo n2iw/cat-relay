@@ -1,6 +1,7 @@
 import re
 
 from utils.cat_client import CATClient
+from utils.client import CoreMode
 
 
 def format_command(field, children = None):
@@ -43,11 +44,10 @@ class Commander(CATClient):
         'DATA-U': 'USB',
         'RTTY': 'USB',
         'RTTY-R': 'LSB',
-        'WBFM': 'WFM'
+        'WBFM': 'FM'
     }
 
     CORE_TO_NATIVE_MODES = {
-        'WFM': 'WBFM'
     }
 
     def get_native_to_core_mode_mapping(self) -> dict[str, str]:
@@ -63,11 +63,11 @@ class Commander(CATClient):
         self.send(cmd)
         return parse_mode(self.receive())
 
-    def set_freq_mode(self, freq: int | None, mode: str | None = None) -> None:
+    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
         frequency = freq if freq is not None else self.get_last_freq()
         native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode) if mode else None
 
-        if native_mode and self.get_last_mode() != native_mode:
+        if mode and self.get_last_mode() != mode:
             parameters = format_command('xcvrfreq', format_freq(frequency)) + format_command('xcvrmode', native_mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
         elif frequency and self.get_last_freq() != frequency:
@@ -76,6 +76,6 @@ class Commander(CATClient):
         else:
             return
         self.send(cmd)
-        if native_mode:
-            self.set_last_mode(native_mode)
+        if mode:
+            self.set_last_mode(mode)
         self.set_last_freq(frequency)

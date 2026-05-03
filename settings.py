@@ -33,12 +33,13 @@ class Settings(QDialog):
         self.params.sdr_location_changed.connect(self.sdr_location_changed)
         self.params.cat_location_changed.connect(self.cat_location_changed)
         self.params.cat_software_changed.connect(self.cat_software_changed)
+        self.params.sdr_software_changed.connect(self.sdr_software_changed)
 
     def create_layout(self):
         layout = QVBoxLayout()
 
         # SDR type
-        layout.addWidget(Dropdown('SDR Software', self.params.sdr_software, VALID_SDRS, SDR_PP, None, disabled=True))
+        layout.addWidget(Dropdown('SDR Software', self.params.sdr_software, VALID_SDRS, SDR_PP, lambda software: self.params.set_sdr_software(software)))
 
         # SDR Location
         layout.addWidget(Dropdown("SDR running on", self.params.sdr_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_sdr_location(location)))
@@ -89,6 +90,11 @@ class Settings(QDialog):
     def cat_location_changed(self, location):
         logger.info('Received CAT Location signal: %s', location)
         self.cat_ip_widget.set_visibility(location == NETWORK)
+
+    @Slot(str)
+    def sdr_software_changed(self, software):
+        logger.info('Received SDR software signal: %s', software)
+        # self.radio_info_widget.set_visibility(software == N1MM)
 
     @Slot(str)
     def cat_software_changed(self, software):
