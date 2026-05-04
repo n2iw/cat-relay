@@ -8,21 +8,17 @@ SOCKET_TIMEOUT = 1
 
 logger = logging.getLogger(__name__)
 
-class TCPClient(ABC):
+class TCPClient():
     @abstractmethod
-    def _enter(self) -> None:
-        ...
-
     def __init__(self, ip: str, port: int):
         self._ip = ip
         self._port = port
         self._sock: socket.socket | None = None
 
-    def __enter__(self):
+    def open(self):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.settimeout(SOCKET_TIMEOUT)
         self._sock.connect((self._ip, self._port))
-        self._enter()
         return self
 
     def send(self, message: str) -> None:
@@ -44,6 +40,3 @@ class TCPClient(ABC):
         if self._sock:
             self._sock.close()
             self._sock = None
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.close()

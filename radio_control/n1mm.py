@@ -3,7 +3,8 @@ import socket
 import threading
 
 from .radio_info import get_radio_info, set_frequency_message
-from utils.client import Client, CoreMode
+from utils.cat_client import CATClient
+from utils.client import CoreMode
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ def map_mode(mode, freq):
     return mode
 
 
-class N1MMClient(Client):
+class N1MMClient(CATClient):
     def __init__(self, listen_port, send_ip, send_port):
         self.listen_port = listen_port
         self.send_ip = send_ip
@@ -37,18 +38,16 @@ class N1MMClient(Client):
         self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._last_mode = ''
         self._last_freq = 0
-        self._last_mode_reported = None
-        self._last_freq_reported = None
         self.terminated = False # flag to terminate the thread
 
-    def __enter__(self) -> 'N1MMClient':
+    def open(self) -> None:
         if not self.listen_sock or not self.send_sock:
             logger.error('Listen or send socket not created')
             raise Exception('Listen or send socket not created')
         self.listen_sock.bind(('0.0.0.0', self.listen_port))
         self.thread = threading.Thread(target=self.listen)
         self.thread.start()
-        return self
+        super().open()
 
     # This function will be running in a separate thread and updates self.last_mode and self.last_freq
     def listen(self):
@@ -93,31 +92,29 @@ class N1MMClient(Client):
             self.send_sock.close()
             self.send_sock = None
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+    def get_freq(self) -> int | None:
+        return self._last_freq
 
-    def get_new_freq(self) -> int | None:
-        if self._last_freq_reported != self._last_freq:
-            self._last_freq_reported = self._last_freq
-            return self._last_freq
-        else:
-            return None
-
-    def get_new_mode(self) -> str | None:
-        if self._last_mode_reported != self._last_mode:
-            self._last_mode_reported = self._last_mode
-            return self._last_mode
-        else:
-            return None
+    def get_mode(self) -> str | None:
+        return self._last_mode
 
     # set frequency only, mode is not supported in N1MM
     def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
+        if not freq:
+            logger.error('Frequency is not set')
+            return
+        if not mode:
+            logger.error('Mode is not set')
+            return
         logger.info('Set freq: %s, mode: %s', freq, mode)
         cmd = set_frequency_message(freq)
         if cmd:
             self._last_freq = freq
-            self._last_freq_reported = freq
-            self._last_mode = mode
-            self._last_mode_reported = mode
+            self._last_mode = self.core_to_native_mode(mode)
             self.send(cmd)
 
+    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
+        return { }
+    
+    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
+        return { }

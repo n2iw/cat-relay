@@ -11,3 +11,8 @@ dependencies = [
     "requests>=2.32.3",
     "websockets>=16.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+]

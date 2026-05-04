@@ -16,15 +16,9 @@ class CoreMode(Enum):
 @runtime_checkable
 class Client(Protocol):
 
-    def __enter__(self) -> 'Client':
+    def open(self) -> None:
         '''
-        Enter the context of the client. Connect your device here.
-        '''
-        ...
-    
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        '''
-        Exit the context of the client. Clean up any resources here.
+        Open the client and connect your device here.
         '''
         ...
 
@@ -36,13 +30,13 @@ class Client(Protocol):
     
     def get_new_freq(self) -> int | None:
         '''
-        Get the new frequency from the device. None if no change
+        Get the current frequency from the device. None if not available
         '''
         ...
     
     def get_new_mode(self) -> CoreMode | None:
         '''
-        Get the new mode from the device. None if no change
+        Get the current mode from the device. None if not available
         Should only return the core mode, not the native mode
         '''
         ...

@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
             self.connect_button.setText(DISCONNECT)
             self.connect_button.setChecked(False)
             if not self.timer_id:
-                self.timer_id = self.startTimer(self.config.params.sync_interval * 1000)
+                self.timer_id = self.startTimer(int(self.config.params.sync_interval * 1000))
         else:
             self.connect_button.setText(CONNECT)
             self.connect_button.setChecked(True)

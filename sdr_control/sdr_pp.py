@@ -10,6 +10,7 @@ import logging
 import re
 from utils.cat_client import CATClient
 from utils.client import CoreMode
+from utils.tcp_client import TCPClient
 
 logger = logging.getLogger(__name__)
 
@@ -92,12 +93,30 @@ class SdrPPClient(CATClient):
     CORE_TO_NATIVE_MODES = {
     }
 
+    def __init__(self, ip, port):
+        super().__init__(ip, port)
+        self._ip = ip
+        self._port = port
+        self._tcp: TCPClient | None = None
+
+    def open(self) -> None:
+        self._tcp = TCPClient(self._ip, self._port)
+        self._tcp.open()
+
+    def close(self) -> None:
+        if self._tcp:
+            self._tcp.close()
+            self._tcp = None
+
     def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
+        if not self._tcp:
+            logger.error('SDR++ is not connected')
+            return
         if mode and self.get_last_mode() != mode:
             native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode)
             message = f'M {native_mode} -1\n'
-            self.send(message)
-            result = self.receive()
+            self._tcp.send(message)
+            result = self._tcp.receive()
             if parse_result(result):
                 self.set_last_mode(mode)
             else:
@@ -105,24 +124,33 @@ class SdrPPClient(CATClient):
 
         if freq and self.get_last_freq() != freq:
             message = f'F {freq}\n'
-            self.send(message)
-            result = self.receive()
+            self._tcp.send(message)
+            result = self._tcp.receive()
             if parse_result(result):
                 self.set_last_freq(freq)
             else:
                 logger.error('Set Hamlib to %s Hz failed!', freq)
 
     def get_freq(self) -> int | None:
+        if not self._tcp:
+            logger.error('SDR++ is not connected')
+            return None
         message = f'f\n'
-        self.send(message)
-        freq = parse_frequency(self.receive())
+        self._tcp.send(message)
+        freq = parse_frequency(self._tcp.receive())
         return freq
 
-    def get_mode(self) -> CoreMode | None:
+    def get_mode(self) -> str | None:
+        if not self._tcp:
+            logger.error('SDR++ is not connected')
+            return None
         message = f'm\n'
-        self.send(message)
-        mode = parse_mode(self.receive()) 
+        self._tcp.send(message)
+        mode = parse_mode(self._tcp.receive()) 
         return mode
 
-    def get_native_to_core_mode_mapping(self) -> dict[str, str]:
+    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
         return self.NATIVE_TO_CORE_MODES
+    
+    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
+        return self.CORE_TO_NATIVE_MODES

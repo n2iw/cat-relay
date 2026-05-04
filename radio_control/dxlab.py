@@ -1,8 +1,10 @@
 import re
-
+import logging
 from utils.cat_client import CATClient
 from utils.client import CoreMode
+from utils.tcp_client import TCPClient
 
+logger = logging.getLogger(__name__)
 
 def format_command(field, children = None):
     if children is None:
@@ -39,33 +41,66 @@ def format_freq(freq: int) -> str:
 
 class Commander(CATClient):
     NATIVE_TO_CORE_MODES = {
-        'CW-R': 'CW',
-        'DATA-L': 'LSB',
-        'DATA-U': 'USB',
-        'RTTY': 'USB',
-        'RTTY-R': 'LSB',
-        'WBFM': 'FM'
+        'CW-R': CoreMode.CW,
+        'DATA-L': CoreMode.LSB,
+        'DATA-U': CoreMode.USB,
+        'RTTY': CoreMode.USB,
+        'RTTY-R': CoreMode.LSB,
+        'WBFM': CoreMode.FM
     }
 
     CORE_TO_NATIVE_MODES = {
     }
 
-    def get_native_to_core_mode_mapping(self) -> dict[str, str]:
+    def __init__(self, ip, port):
+        self._ip = ip
+        self._port = port
+        self._tcp: TCPClient | None = None
+
+    def open(self) -> None:
+        self._tcp = TCPClient(self._ip, self._port)
+        self._tcp.open()
+        super().open()
+
+    def close(self) -> None:
+        if self._tcp:
+            self._tcp.close()
+            self._tcp = None
+
+    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
         return self.NATIVE_TO_CORE_MODES
 
+    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
+        return self.CORE_TO_NATIVE_MODES
+
     def get_freq(self) -> int | None:
+        if not self._tcp:
+            logger.error('DXLab is not connected')
+            return None
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
-        self.send(cmd)
-        return parse_frequency(self.receive())
+        self._tcp.send(cmd)
+        return parse_frequency(self._tcp.receive())
 
     def get_mode(self) -> str | None:
+        if not self._tcp:
+            logger.error('DXLab is not connected')
+            return None
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
-        self.send(cmd)
-        return parse_mode(self.receive())
+        self._tcp.send(cmd)
+        return parse_mode(self._tcp.receive())
 
     def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
+        if not self._tcp:
+            logger.error('DXLab is not connected')
+            return
         frequency = freq if freq is not None else self.get_last_freq()
-        native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode) if mode else None
+        if frequency is None:
+            logger.error('Frequency is not set')
+            return
+        if not mode:
+            logger.error('Mode is not set')
+            return
+        native_mode = self.core_to_native_mode(mode)
 
         if mode and self.get_last_mode() != mode:
             parameters = format_command('xcvrfreq', format_freq(frequency)) + format_command('xcvrmode', native_mode)
@@ -75,7 +110,7 @@ class Commander(CATClient):
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         else:
             return
-        self.send(cmd)
+        self._tcp.send(cmd)
         if mode:
             self.set_last_mode(mode)
         self.set_last_freq(frequency)

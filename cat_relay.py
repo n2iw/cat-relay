@@ -13,7 +13,8 @@ from sdr_control.sdr_pp import SdrPPClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
-from utils.client import Client
+from utils.client import Client, CoreMode
+from enum import Enum
 
 from config import Config, DXLAB, N1MM, FLRIG, RUMLOG, NETWORK, LOCAL_HOST, SDR_CONNECT, SDR_PP
 
@@ -64,6 +65,9 @@ def sync_result(changed, source = None, destination = None, frequency = None, mo
         })
     return result
 
+class ClientType(Enum):
+    CAT = 'cat'
+    SDR = 'sdr'
 
 class CatRelay(QObject):
     # Signals
@@ -84,6 +88,15 @@ class CatRelay(QObject):
         self.cat_client: Client|None = None
         self.sdr_client: Client|None = None
 
+        self.freq_memory: dict[ClientType, int | None] = {
+            ClientType.CAT: None,
+            ClientType.SDR: None
+        }
+        self.mode_memory: dict[ClientType, CoreMode | None] = {
+            ClientType.CAT: None,
+            ClientType.SDR: None
+        }
+
     def set_params(self, params):
         self.cat_location = params.cat_location
         self.cat_software = params.cat_software
@@ -100,10 +113,10 @@ class CatRelay(QObject):
 
     def connect_clients(self):
         try:
-            self.cat_client = self._connect_cat()
+            self._connect_cat()
             logger.info('Cat Software connected')
 
-            self.sdr_client = self._connect_sdr()
+            self._connect_sdr()
             logger.info('SDR connected.')
 
         except Exception:
@@ -136,50 +149,72 @@ class CatRelay(QObject):
     def __del__(self):
         self.disconnect_clients()
 
-    def _connect_sdr(self) -> Client:
+    def _connect_sdr(self) -> None:
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
         logger.info('Connecting to %s at %s:%s', self.sdr_software, ip_address, self.sdr_port)
         if self.sdr_software == SDR_CONNECT:
-            return SdrConnectClient(ip_address, self.sdr_port).__enter__()
+            self.sdr_client = SdrConnectClient(ip_address, self.sdr_port)
+            self.sdr_client.open()
         elif self.sdr_software == SDR_PP:
-            return SdrPPClient(ip_address, self.sdr_port).__enter__()
+            self.sdr_client = SdrPPClient(ip_address, self.sdr_port)
+            self.sdr_client.open()
         else:
             message = f'SDR software "{self.sdr_software}" is not supported!'
             logger.error(message)
             raise Exception(message)
 
-    def _connect_cat(self) -> Client:
+    def _connect_cat(self) -> None:
         ip_address = self.cat_ip if self.cat_location == NETWORK else LOCAL_HOST
         if self.cat_software in [DXLAB, RUMLOG] :
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            return  Commander(ip_address, self.cat_port).__enter__()
+            self.cat_client = Commander(ip_address, self.cat_port)
+            self.cat_client.open()
         elif self.cat_software == N1MM:
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            return N1MMClient(self.radio_info_port, ip_address, self.cat_port).__enter__()
+            self.cat_client = N1MMClient(self.radio_info_port, ip_address, self.cat_port)
+            self.cat_client.open()
         elif self.cat_software == FLRIG:
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            return FlrigClient(ip_address, self.cat_port).__enter__()
+            self.cat_client = FlrigClient(ip_address, self.cat_port)
+            self.cat_client.open()
         else:
             message = f'Cat software "{self.cat_software}" is not supported!'
             logger.error(message)
             raise Exception(message)
+
+    def update_freq_memory(self, client: ClientType, new_freq: int | None) -> int | None:
+        if new_freq is None:
+            return None
+        if new_freq != self.freq_memory[client]:
+            self.freq_memory[client] = new_freq
+            return new_freq
+        else:
+            return None
+
+    def update_mode_memory(self, client: ClientType, new_mode: CoreMode | None) -> CoreMode | None:
+        if new_mode is None:
+            return None
+        if new_mode != self.mode_memory[client]:
+            self.mode_memory[client] = new_mode
+            return new_mode
+        else:
+            return None
 
     def sync(self):
         try:
             if not self.cat_client or not self.sdr_client:
                 logger.error('Cat or SDR client not connected')
                 return None
-            radio_freq = self.cat_client.get_new_freq()
-            radio_mode = self.cat_client.get_new_mode()
-            if (radio_freq is not None) or (radio_mode is not None):
+            radio_freq = self.update_freq_memory(ClientType.CAT, self.cat_client.get_new_freq())
+            radio_mode = self.update_mode_memory(ClientType.CAT, self.cat_client.get_new_mode())
+            sdr_freq = self.update_freq_memory(ClientType.SDR, self.sdr_client.get_new_freq())
+            sdr_mode = self.update_mode_memory(ClientType.SDR, self.sdr_client.get_new_mode())
+            if (radio_freq is not None and radio_freq != sdr_freq) or (radio_mode is not None and radio_mode != sdr_mode):
                 self.sdr_client.set_freq_mode(radio_freq, radio_mode)
                 return sync_result(True, 'radio', 'SDR', radio_freq, radio_mode)
-            else:
-                sdr_freq = self.sdr_client.get_new_freq()
-                sdr_mode = self.sdr_client.get_new_mode()
-                if (sdr_freq is not None) or (sdr_mode is not None):
-                    self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
-                    return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
+            elif (sdr_freq is not None and sdr_freq != radio_freq) or (sdr_mode is not None and sdr_mode != radio_mode):
+                self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
+                return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
             return sync_result(False)
         except Exception:
             logger.exception('Sync failed')

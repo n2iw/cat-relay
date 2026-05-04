@@ -1,7 +1,8 @@
 import logging
 import xmlrpc.client
 from requests.exceptions import ConnectionError
-from utils.client import Client, CoreMode
+from utils.cat_client import CATClient
+from utils.client import CoreMode
 
 from .transport import RequestsTransport
 
@@ -29,63 +30,58 @@ def _int_from_xmlrpc(v: object) -> int:
 ## depending on how you have your USB connection set on the radio. The same is true for "LSB" and "AM" modes.
 
 
-class FlrigClient(Client):
+class FlrigClient(CATClient):
     NATIVE_TO_CORE_MODES = {
-        'AM':'AM',
-        'AM-D':'AM',
-        'AM-N':'AM',
-        'CW':'CW',
-        'CW-L':'CW',
-        'CW-R':'CW',
-        'CW-U':'CW',
-        'DATA-FM':'FM',
-        'DATA-FMN':'FM',
-        'DATA-L':'LSB',
-        'DATA-U':'USB',
-        'DV':'FM',
-        'FM':'FM',
-        'FM-D':'FM',
-        'FM-N':'FM',
-        'FSK':'USB',
-        'LSB':'LSB',
-        'LSB-D':'LSB',
-        'PSK':'USB',
-        'RTTY':'USB',
-        'RTTY-L':'LSB',
-        'RTTY-R':'LSB',
-        'RTTY-U':'USB',
-        'USB':'USB',
-        'USB-D':'USB',
-        'WFM':'FM'
+        'AM':CoreMode.AM,
+        'AM-D':CoreMode.AM,
+        'AM-N':CoreMode.AM,
+        'CW':CoreMode.CW,
+        'CW-L':CoreMode.CW,
+        'CW-R':CoreMode.CW,
+        'CW-U':CoreMode.CW,
+        'DATA-FM':CoreMode.FM,
+        'DATA-FMN':CoreMode.FM,
+        'DATA-L':CoreMode.LSB,
+        'DATA-U':CoreMode.USB,
+        'DV':CoreMode.FM,
+        'FM':CoreMode.FM,
+        'FM-D':CoreMode.FM,
+        'FM-N':CoreMode.FM,
+        'FSK':CoreMode.USB,
+        'LSB':CoreMode.LSB,
+        'LSB-D':CoreMode.LSB,
+        'PSK':CoreMode.USB,
+        'RTTY':CoreMode.USB,
+        'RTTY-L':CoreMode.LSB,
+        'RTTY-R':CoreMode.LSB,
+        'RTTY-U':CoreMode.USB,
+        'USB':CoreMode.USB,
+        'USB-D':CoreMode.USB,
+        'WFM':CoreMode.FM,
     }
 
     CORE_TO_NATIVE_MODES = {
     }
 
     def __init__(self, ip, port):
-        self.last_mode = None
-        self.last_freq = None
         self._ip = ip
         self._port = port
-        self._sock = None
+        self._last_mode = None
+        self._last_freq = None
+        self._flrig: xmlrpc.client.ServerProxy | None = None
 
-    def __enter__(self):
-#        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        self._sock.connect((self._ip, self._port))
-#        self._enter()
-#        print(f'Attempting to connect to connect to Flrig at IP address={self._ip}, port={self._port}, via XMP-RPC')
+    def open(self) -> None:
         try:
             self.flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
+            super().open()
         except ConnectionError as e:
             logger.error('%s', e)
             logger.error('Are you sure flrig is running?')
-        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        return
-
-    def close(self):
-        self.flrig = None
+    def close(self) -> None:
+        if self._flrig:
+            self._flrig.close()
+            self._flrig = None
 
     def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
         if not self.flrig:
@@ -93,21 +89,22 @@ class FlrigClient(Client):
             return
 
         if freq is not None:
-            if self.last_freq != freq:
+            if self._last_freq != freq:
                 self.flrig.rig.set_frequency(float(freq))
-                self.last_freq = freq
+                self._last_freq = freq
 
-        native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode) if mode else None
-        if not native_mode:
+        if not mode:
+            logger.error('Mode is not set')
             return
+        native_mode = self.core_to_native_mode(mode)
         if not native_mode in self.NATIVE_TO_CORE_MODES.keys():
             logger.warning(f'Unmapped Core Mode: {native_mode}')
             return None
-        if self.last_mode != mode:
+        if self._last_mode != native_mode:
             self.flrig.rig.set_mode(native_mode)
-            self.last_mode = mode
+            self._last_mode = native_mode
 
-    def get_new_freq(self) -> int | None:
+    def get_freq(self) -> int | None:
         if not self.flrig:
             logger.error('Flrig is not connected')
             return None
@@ -116,12 +113,9 @@ class FlrigClient(Client):
             logger.error('Failed to get frequency from Flrig')
             return None
         freq = _int_from_xmlrpc(raw)
-        if freq != self.last_freq:
-            self.last_freq = freq
-            return freq
-        return None
+        return freq
 
-    def get_new_mode(self) -> str | None:
+    def get_mode(self) -> str | None:
         if not self.flrig:
             logger.error('Flrig is not connected')
             return None
@@ -130,11 +124,10 @@ class FlrigClient(Client):
             logger.error('Failed to get mode from Flrig')
             return None
         native_mode = str(raw)
-        mode = self.NATIVE_TO_CORE_MODES.get(native_mode)
-        if not mode:
-            logger.warning(f'Unmapped Native Mode: {native_mode}')
-            return None
-        if mode != self.last_mode:
-            self.last_mode = mode
-            return mode
-        return None
+        return native_mode
+
+    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
+        return self.NATIVE_TO_CORE_MODES
+    
+    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
+        return self.CORE_TO_NATIVE_MODES
