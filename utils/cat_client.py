@@ -4,7 +4,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class CATClient(Client):
+
+class CATClient():
 
     @abstractmethod
     def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
@@ -98,12 +99,12 @@ class CATClient(Client):
         return None
 
     def open(self):
-        new_freq = self.get_new_freq()
+        new_freq = self.get_freq()
         if new_freq is not None:
             self._last_freq_reported = new_freq
-        new_mode = self.get_new_mode()
+        new_mode = self.get_mode()
         if new_mode is not None:
-            self._last_mode_reported = new_mode
+            self._last_mode_reported = self.native_to_core_mode(new_mode)
 
     def native_to_core_mode(self, mode: str) -> CoreMode | None:
         '''

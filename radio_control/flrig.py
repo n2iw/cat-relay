@@ -1,10 +1,10 @@
 import logging
 import xmlrpc.client
 from requests.exceptions import ConnectionError
-from utils.cat_client import CATClient
-from utils.client import CoreMode
+from utils.client import CoreMode, Client
+from utils.mode_mapper import ModeMapper
 
-from .transport import RequestsTransport
+from transport import RequestsTransport
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def _int_from_xmlrpc(v: object) -> int:
 ## depending on how you have your USB connection set on the radio. The same is true for "LSB" and "AM" modes.
 
 
-class FlrigClient(CATClient):
+class FlrigClient(Client):
     NATIVE_TO_CORE_MODES = {
         'AM':CoreMode.AM,
         'AM-D':CoreMode.AM,
@@ -69,11 +69,11 @@ class FlrigClient(CATClient):
         self._last_mode = None
         self._last_freq = None
         self._flrig: xmlrpc.client.ServerProxy | None = None
+        self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
     def open(self) -> None:
         try:
-            self.flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
-            super().open()
+            self._flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
         except ConnectionError as e:
             logger.error('%s', e)
             logger.error('Are you sure flrig is running?')
@@ -83,51 +83,44 @@ class FlrigClient(CATClient):
             self._flrig.close()
             self._flrig = None
 
-    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
-        if not self.flrig:
+    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+        if not self._flrig:
             logger.error('Flrig is not connected')
             return
 
         if freq is not None:
-            if self._last_freq != freq:
-                self.flrig.rig.set_frequency(float(freq))
-                self._last_freq = freq
+            if self.get_freq() != freq:
+                self._flrig.rig.set_frequency(float(freq))
 
         if not mode:
             logger.error('Mode is not set')
             return
-        native_mode = self.core_to_native_mode(mode)
-        if not native_mode in self.NATIVE_TO_CORE_MODES.keys():
-            logger.warning(f'Unmapped Core Mode: {native_mode}')
-            return None
-        if self._last_mode != native_mode:
-            self.flrig.rig.set_mode(native_mode)
-            self._last_mode = native_mode
 
-    def get_freq(self) -> int | None:
-        if not self.flrig:
+        native_mode = self._mapper.get_native_mode(mode)
+        if not native_mode in self.NATIVE_TO_CORE_MODES.keys():
+            logger.warning(f'Unmapped Core Mode: {mode}')
+            return
+        if self.get_mode() != native_mode:
+            self._flrig.rig.set_mode(native_mode)
+
+    def get_freq(self) -> int:
+        if not self._flrig:
             logger.error('Flrig is not connected')
-            return None
-        raw = self.flrig.rig.get_vfo()
+            raise Exception('Flrig is not connected')
+        raw = self._flrig.rig.get_vfo()
         if raw is None:
             logger.error('Failed to get frequency from Flrig')
-            return None
+            raise Exception('Failed to get frequency from Flrig')
         freq = _int_from_xmlrpc(raw)
         return freq
 
-    def get_mode(self) -> str | None:
-        if not self.flrig:
+    def get_mode(self) -> CoreMode:
+        if not self._flrig:
             logger.error('Flrig is not connected')
-            return None
-        raw = self.flrig.rig.get_mode()
+            raise Exception('Flrig is not connected')
+        raw = self._flrig.rig.get_mode()
         if raw is None:
             logger.error('Failed to get mode from Flrig')
-            return None
+            raise Exception('Failed to get mode from Flrig')
         native_mode = str(raw)
-        return native_mode
-
-    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
-        return self.NATIVE_TO_CORE_MODES
-    
-    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
-        return self.CORE_TO_NATIVE_MODES
+        return self._mapper.get_core_mode(native_mode)

@@ -1,21 +1,21 @@
 # This module is a client for the SDR Connect software provided by SDRPlay
 
 import logging
-from utils.cat_client import CATClient
 from websockets.sync.client import connect, ClientConnection
 import json
 import threading
-from utils.client import CoreMode
+from utils.client import CoreMode, Client
+from utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
 
 FREQUENCY_PROPERTY = 'device_vfo_frequency'
 MODE_PROPERTY = 'demodulator'
 
-def SdrConnectMessage(event_type: str, property: str, value: str | None = None) -> str:
+def sdr_connect_message(event_type: str, prop: str, value: str | None = None) -> str:
     message = {
         'event_type': event_type,
-        'property': property
+        'property': prop
     }
     if value is not None:
         message['value'] = value
@@ -23,18 +23,18 @@ def SdrConnectMessage(event_type: str, property: str, value: str | None = None) 
     return json.dumps(message)
 
 def get_frequency_message() -> str:
-    return SdrConnectMessage('get_property', FREQUENCY_PROPERTY)
+    return sdr_connect_message('get_property', FREQUENCY_PROPERTY)
 
 def set_frequency_message(freq: int) -> str:
-    return SdrConnectMessage('set_property', FREQUENCY_PROPERTY, str(freq))
+    return sdr_connect_message('set_property', FREQUENCY_PROPERTY, str(freq))
 
 def get_mode_message() -> str:
-    return SdrConnectMessage('get_property', MODE_PROPERTY)
+    return sdr_connect_message('get_property', MODE_PROPERTY)
 
 def set_mode_message(mode: str) -> str:
-    return SdrConnectMessage('set_property', MODE_PROPERTY, mode)
+    return sdr_connect_message('set_property', MODE_PROPERTY, mode)
 
-class SdrConnectClient(CATClient):
+class SdrConnectClient(Client):
 
     NATIVE_TO_CORE_MODES = {
         'WFM': CoreMode.FM,  # WFM mode from SDR Connect will be converted to WFM mode
@@ -46,12 +46,6 @@ class SdrConnectClient(CATClient):
         CoreMode.FM: 'NFM'
     }
 
-    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
-        return self.NATIVE_TO_CORE_MODES
-    
-    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
-        return self.CORE_TO_NATIVE_MODES
-
     def __init__(self, ip, port):
         self._last_mode: str | None = None
         self._last_freq: int | None = None
@@ -60,15 +54,16 @@ class SdrConnectClient(CATClient):
         self._ws: ClientConnection | None = None
         self._terminated = False
 
+        self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
+
     def open(self) -> None:
         try:
             self._terminated = False
             self._ws = connect(f'ws://{self._ip}:{self._port}')
             self._query_device_frequency()
             self._query_device_mode()
-            self.thread = threading.Thread(target=self.listen)
-            self.thread.start()
-            super().open()
+            thread = threading.Thread(target=self.listen)
+            thread.start()
         except Exception as e:
             logger.error(f'Failed to connect to SdrConnect at {self._ip}:{self._port}: {e}')
             raise e
@@ -100,7 +95,7 @@ class SdrConnectClient(CATClient):
             self._last_mode = None
             self._last_freq = None
     
-    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
+    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._ws:
             logger.error('SDR Connect is not connected')
             return
@@ -109,53 +104,56 @@ class SdrConnectClient(CATClient):
             command = set_frequency_message(freq)
             self._ws.send(command)
             self._last_freq = freq
-            self.set_last_freq(freq)
 
         if mode is not None:
-            if self._last_mode != mode:
-                native_mode = self.core_to_native_mode(mode)
+            native_mode = self._mapper.get_native_mode(mode)
+            if self._last_mode != native_mode:
                 command = set_mode_message(native_mode)
                 self._ws.send(command)
                 self._last_mode = native_mode
-                self.set_last_mode(mode)
 
 
-    def get_freq(self) -> int | None:
+    def get_freq(self) -> int:
+        if not self._last_freq:
+            logger.error('Frequency is not set')
+            raise Exception('Frequency is not set')
         return self._last_freq
 
-    def get_mode(self) -> str | None:
-        return self._last_mode
+    def get_mode(self) -> CoreMode:
+        if not self._last_mode:
+            logger.error('Mode is not set')
+            raise Exception('Mode is not set')
+        return self._mapper.get_core_mode(self._last_mode)
 
     def _query_device_frequency(self) -> int | None:
-        new_freq = self.query_device_property(FREQUENCY_PROPERTY)
+        new_freq = self._query_device_property(FREQUENCY_PROPERTY)
         if new_freq is not None:
             self._last_freq = int(new_freq)
         return self._last_freq
 
     def _query_device_mode(self) -> str | None:
-        new_mode = self.query_device_property(MODE_PROPERTY)
+        new_mode = self._query_device_property(MODE_PROPERTY)
         if new_mode is not None:
             self._last_mode = new_mode
         return self._last_mode
 
-    def query_device_property(self, property: str) -> str | None:
-        logger.info(f'querying device property: {property}')
+    def _query_device_property(self, prop: str) -> str | None:
+        logger.info(f'querying device property: {prop}')
         if not self._ws:
             logger.error('SDR Connect is not connected')
             return None
-        if property == FREQUENCY_PROPERTY:
+        if prop == FREQUENCY_PROPERTY:
             command = get_frequency_message()
-        elif property == MODE_PROPERTY:
+        elif prop == MODE_PROPERTY:
             command = get_mode_message()
         else:
-            logger.error(f'Invalid property: {property}')
+            logger.error(f'Invalid property: {prop}')
             return None
         self._ws.send(command)
         while True:
             response = json.loads(self._ws.recv())
-            if response['event_type'] == 'get_property_response' and response['property'] == property:
+            if response['event_type'] == 'get_property_response' and response['property'] == prop:
                 new_value = response['value']
                 return new_value
             else:
                 logger.info(f'ignored event: event_type: {response["event_type"]}, property: {response["property"]}')
-        return None

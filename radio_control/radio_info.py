@@ -1,5 +1,5 @@
 import logging
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as elementTree
 
 FREQUENCY = 'Freq1'
 
@@ -18,19 +18,21 @@ class RadioInfo:
         'FocusRadioNr'
     ]
 
-    def get_frequency(self):
-        '''
+    def get_frequency(self) -> int | None:
+        """
         :return: frequency in Hz
-        '''
+        """
         if self.data and 'Freq' in self.data:
             return int(self.data['Freq']) * 10
+        return None
 
-    def get_mode(self):
-        '''
+    def get_mode(self) -> str | None:
+        """
         :return: mode
-        '''
+        """
         if self.data and 'Mode' in self.data:
             return self.data['Mode']
+        return None
 
     def __init__(self, root):
         if root.tag == self.TAG_NAME:
@@ -53,7 +55,7 @@ def read_child(data, name):
 
 
 def get_radio_info(xml_data: str) -> RadioInfo | None:
-    root = ET.fromstring(xml_data)
+    root = elementTree.fromstring(xml_data)
     if root.tag == RadioInfo.TAG_NAME:
         return RadioInfo(root)
     else:
@@ -63,13 +65,13 @@ def get_radio_info(xml_data: str) -> RadioInfo | None:
 
 
 def set_frequency_message(freq):
-    cmd = ET.Element('radio_setfrequency')
-    app = ET.SubElement(cmd, 'app')
+    cmd = elementTree.Element('radio_setfrequency')
+    app = elementTree.SubElement(cmd, 'app')
     app.text = APP_NAME
-    radio_nr = ET.SubElement(cmd, 'radionr')
+    radio_nr = elementTree.SubElement(cmd, 'radionr')
     radio_nr.text = '1'
-    frequency = ET.SubElement(cmd, 'frequency')
+    frequency = elementTree.SubElement(cmd, 'frequency')
     frequency.text = f'{freq/1000:.3f}'
-    message = ET.tostring(cmd, xml_declaration=True)
+    message = elementTree.tostring(cmd, xml_declaration=True)
     return message
 

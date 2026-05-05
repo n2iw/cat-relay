@@ -8,9 +8,10 @@
 
 import logging
 import re
-from utils.cat_client import CATClient
 from utils.client import CoreMode
+from utils.mode_mapper import ModeMapper
 from utils.tcp_client import TCPClient
+from utils.client import Client
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ def parse_frequency(message) -> int | None:
         freq_str = result.group(1)
         if freq_str:
             return int(freq_str)
+    return None
 
 
 def parse_mode(message) -> str | None:
@@ -29,6 +31,7 @@ def parse_mode(message) -> str | None:
         freq_str = result.group(1)
         if freq_str:
             return freq_str
+    return None
 
 
 def parse_result(message) -> bool:
@@ -82,25 +85,27 @@ SDRPP_VALID_MODES = [
 
 
 
-class SdrPPClient(CATClient):
+class SdrPPClient(Client):
 
     NATIVE_TO_CORE_MODES = {
-        'WFM': 'FM',  # WFM mode from SDR Connect will be converted to WFM mode
-        'DSB': 'AM',  # DSB mode from SDR Connect will be converted to AM mode
-        'RAW': None  # RAW mode from SDR Connect will be disabled
+        'WFM': CoreMode.FM,  # WFM mode from SDR Connect will be converted to WFM mode
+        'DSB': CoreMode.AM,  # DSB mode from SDR Connect will be converted to AM mode
     }
 
     CORE_TO_NATIVE_MODES = {
     }
 
     def __init__(self, ip, port):
-        super().__init__(ip, port)
         self._ip = ip
         self._port = port
         self._tcp: TCPClient | None = None
+        self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
     def open(self) -> None:
         self._tcp = TCPClient(self._ip, self._port)
+        if not self._tcp:
+            logger.error('Failed to connect to SDR++')
+            return
         self._tcp.open()
 
     def close(self) -> None:
@@ -108,49 +113,43 @@ class SdrPPClient(CATClient):
             self._tcp.close()
             self._tcp = None
 
-    def set_freq_mode(self, freq: int | None, mode: CoreMode | None = None) -> None:
+    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._tcp:
             logger.error('SDR++ is not connected')
             return
-        if mode and self.get_last_mode() != mode:
-            native_mode = self.CORE_TO_NATIVE_MODES.get(mode, mode)
+        if mode and self.get_mode() != mode:
+            native_mode = self._mapper.get_native_mode(mode)
             message = f'M {native_mode} -1\n'
             self._tcp.send(message)
             result = self._tcp.receive()
-            if parse_result(result):
-                self.set_last_mode(mode)
-            else:
+            if not parse_result(result):
                 logger.error('Set Hamlib to %s mode failed!', mode)
 
-        if freq and self.get_last_freq() != freq:
+        if freq and self.get_freq() != freq:
             message = f'F {freq}\n'
             self._tcp.send(message)
             result = self._tcp.receive()
-            if parse_result(result):
-                self.set_last_freq(freq)
-            else:
+            if not parse_result(result):
                 logger.error('Set Hamlib to %s Hz failed!', freq)
 
-    def get_freq(self) -> int | None:
+    def get_freq(self) -> int:
         if not self._tcp:
             logger.error('SDR++ is not connected')
-            return None
+            raise Exception('SDR++ is not connected')
         message = f'f\n'
         self._tcp.send(message)
         freq = parse_frequency(self._tcp.receive())
+        if freq is None:
+            raise Exception('Failed to get frequency from SDR++')
         return freq
 
-    def get_mode(self) -> str | None:
+    def get_mode(self) -> CoreMode:
         if not self._tcp:
             logger.error('SDR++ is not connected')
-            return None
+            raise Exception('SDR++ is not connected')
         message = f'm\n'
         self._tcp.send(message)
-        mode = parse_mode(self._tcp.receive()) 
-        return mode
-
-    def get_native_to_core_mode_mapping(self) -> dict[str, CoreMode]:
-        return self.NATIVE_TO_CORE_MODES
-    
-    def get_core_to_native_mode_mapping(self) -> dict[CoreMode, str]:
-        return self.CORE_TO_NATIVE_MODES
+        mode = parse_mode(self._tcp.receive())
+        if mode is None:
+            raise Exception('Failed to get mode from SDR++')
+        return self._mapper.get_core_mode(mode)
