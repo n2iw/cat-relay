@@ -11,10 +11,10 @@ Oh, and I made it HTTP only because flrig doesn't support HTTPS as far as I know
 The file was originally released under the MIT license"""
 
 import xmlrpc
+from xmlrpc.client import Transport, ProtocolError
 import requests
-import requests.utils
 
-class RequestsTransport(xmlrpc.client.Transport):
+class RequestsTransport(Transport):
     """Drop in Transport for xmlrpclib that uses Requests instead of httplib.
 
     Inherits xml.client.Transport and is meant to be passed directly to xmlrpc.ServerProxy constructor.
@@ -39,7 +39,7 @@ class RequestsTransport(xmlrpc.client.Transport):
         try:
             resp.raise_for_status()
         except requests.RequestException as e:
-            raise xmlrpc.client.ProtocolError(url, resp.status_code, str(e), resp.headers)
+            raise ProtocolError(url, resp.status_code, str(e), resp.headers)
         else:
             return self.parse_response(resp)
 

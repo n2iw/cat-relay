@@ -4,7 +4,7 @@ from requests.exceptions import ConnectionError
 from utils.client import CoreMode, Client
 from utils.mode_mapper import ModeMapper
 
-from transport import RequestsTransport
+from radio_control.transport import RequestsTransport
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class FlrigClient(Client):
 
     def close(self) -> None:
         if self._flrig:
-            self._flrig.close()
+            self._flrig.close_connection()
             self._flrig = None
 
     def set_freq_mode(self, freq: int, mode: CoreMode) -> None:

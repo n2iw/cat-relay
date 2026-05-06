@@ -217,11 +217,11 @@ class CatRelay(QObject):
             if radio_freq_changed or radio_mode_changed:
                 if radio_freq != sdr_freq or radio_mode != sdr_mode:
                     self.sdr_client.set_freq_mode(radio_freq, radio_mode)
-                    return sync_result(True, 'radio', 'SDR', radio_freq, radio_mode)
+                    return sync_result(True, 'radio', 'SDR', radio_freq, radio_mode.value)
             elif sdr_freq_changed or sdr_mode_changed:
                 if sdr_freq != radio_freq or sdr_mode != radio_mode:
                     self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
-                    return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
+                    return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode.value)
             return sync_result(False)
         except Exception as e:
             logger.exception(f'Sync failed: {e}')

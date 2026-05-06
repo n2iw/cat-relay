@@ -2,7 +2,7 @@ import logging
 import socket
 import threading
 
-from radio_info import get_radio_info, set_frequency_message
+from radio_control.radio_info import get_radio_info, set_frequency_message
 from utils.client import CoreMode, Client
 from utils.mode_mapper import ModeMapper
 
