@@ -117,7 +117,7 @@ class SdrPPClient(Client):
         if not self._tcp:
             logger.error('SDR++ is not connected')
             return
-        if mode and self.get_mode() != mode:
+        if self.get_mode() != mode:
             native_mode = self._mapper.get_native_mode(mode)
             message = f'M {native_mode} -1\n'
             self._tcp.send(message)
@@ -125,7 +125,7 @@ class SdrPPClient(Client):
             if not parse_result(result):
                 logger.error('Set Hamlib to %s mode failed!', mode)
 
-        if freq and self.get_freq() != freq:
+        if self.get_freq() != freq:
             message = f'F {freq}\n'
             self._tcp.send(message)
             result = self._tcp.receive()

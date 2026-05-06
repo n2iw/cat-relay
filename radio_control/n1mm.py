@@ -104,13 +104,6 @@ class N1MMClient(Client):
 
     # Only set frequency, setting mode is not supported in N1MM
     def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
-        if not freq:
-            logger.error('Frequency is not set')
-            return
-        if not mode:
-            logger.error('Mode is not set')
-            return
-        logger.info('Set freq: %s, mode: %s', freq, mode)
         cmd = set_frequency_message(freq)
         if cmd:
             self._last_freq = freq

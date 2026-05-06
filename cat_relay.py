@@ -119,8 +119,8 @@ class CatRelay(QObject):
             self._connect_sdr()
             logger.info('SDR connected.')
 
-        except Exception:
-            logger.exception('Connection failed')
+        except Exception as e:
+            logger.exception(f'Connection failed: {e}')
             self.disconnect_clients()
 
         finally:
@@ -223,13 +223,12 @@ class CatRelay(QObject):
                     self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
                     return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode)
             return sync_result(False)
-        except Exception:
-            logger.exception('Sync failed')
+        except Exception as e:
+            logger.exception(f'Sync failed: {e}')
             self.connection_state_changed.emit(self.is_connected())
             return None
 
-
-if __name__ == '__main__':
+def main():
     setup_logging()
     # reconnect every RETRY_TIME seconds, until user presses Ctrl+C
     params = Config().params
@@ -246,16 +245,18 @@ if __name__ == '__main__':
                     logger.warning('Sync failed')
                 time.sleep(params.sync_interval)
 
-        except KeyboardInterrupt as ke:
+        except KeyboardInterrupt:
             logger.info('Terminated by user.')
-            cat_relay = None
             sys.exit()
-        except Exception:
+        except Exception  as e:
             retry_time = params.reconnect_time
-            logger.exception('Error in main loop')
+            logger.exception(f'Error in main loop {e}')
             logger.info('Retry in %s seconds ...', retry_time)
             logger.info('Press Ctrl+C to exit')
             time.sleep(retry_time)
+
+if __name__ == '__main__':
+    main()
 
 
 

@@ -88,16 +88,11 @@ class FlrigClient(Client):
             logger.error('Flrig is not connected')
             return
 
-        if freq is not None:
-            if self.get_freq() != freq:
-                self._flrig.rig.set_frequency(float(freq))
-
-        if not mode:
-            logger.error('Mode is not set')
-            return
+        if self.get_freq() != freq:
+            self._flrig.rig.set_frequency(float(freq))
 
         native_mode = self._mapper.get_native_mode(mode)
-        if not native_mode in self.NATIVE_TO_CORE_MODES.keys():
+        if native_mode not in self.NATIVE_TO_CORE_MODES.keys():
             logger.warning(f'Unmapped Core Mode: {mode}')
             return
         if self.get_mode() != native_mode:

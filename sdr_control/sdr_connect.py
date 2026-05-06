@@ -100,17 +100,15 @@ class SdrConnectClient(Client):
             logger.error('SDR Connect is not connected')
             return
 
-        if freq is not None:
-            command = set_frequency_message(freq)
-            self._ws.send(command)
-            self._last_freq = freq
+        command = set_frequency_message(freq)
+        self._ws.send(command)
+        self._last_freq = freq
 
-        if mode is not None:
-            native_mode = self._mapper.get_native_mode(mode)
-            if self._last_mode != native_mode:
-                command = set_mode_message(native_mode)
-                self._ws.send(command)
-                self._last_mode = native_mode
+        native_mode = self._mapper.get_native_mode(mode)
+        if self._last_mode != native_mode:
+            command = set_mode_message(native_mode)
+            self._ws.send(command)
+            self._last_mode = native_mode
 
 
     def get_freq(self) -> int:

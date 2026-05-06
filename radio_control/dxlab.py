@@ -94,14 +94,13 @@ class Commander(Client):
         if not self._tcp:
             logger.error('DXLab is not connected')
             return
-        frequency = freq if freq is not None else self.get_freq()
 
-        if mode and self.get_mode() != mode:
+        if self.get_mode() != mode:
             native_mode = self._mapper.get_native_mode(mode)
-            parameters = format_command('xcvrfreq', format_freq(frequency)) + format_command('xcvrmode', native_mode)
+            parameters = format_command('xcvrfreq', format_freq(freq)) + format_command('xcvrmode', native_mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
-        elif frequency and self.get_freq() != frequency:
-            parameters = format_command('xcvrfreq', format_freq(frequency))
+        elif self.get_freq() != freq:
+            parameters = format_command('xcvrfreq', format_freq(freq))
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         else:
             return
