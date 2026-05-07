@@ -201,7 +201,7 @@ class CatRelay(QObject):
         else:
             return False
 
-    def sync(self):
+    async def sync(self):
         try:
             if not self.cat_client or not self.sdr_client:
                 logger.error('Cat or SDR client not connected')

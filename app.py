@@ -1,5 +1,6 @@
 import logging
 import sys
+import asyncio
 
 from utils.log_config import setup_logging
 
@@ -8,6 +9,7 @@ setup_logging()
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QCheckBox
 from PySide6.QtCore import QTimer, Qt, Slot
+from PySide6.QtAsyncio import run
 
 from cat_relay import CatRelay, MESSAGE, CHANGED
 from config import Config, Parameters
@@ -61,6 +63,8 @@ class MainWindow(QMainWindow):
         self.config = Config()
         self.cat_relay = CatRelay(self.config.params)
         self.cat_relay.connection_state_changed.connect(self.cat_relay_connection_changed)
+        self.sync_task = None
+        self.terminated = False
         self.timer_id = None
         self.auto_connect = False
 
@@ -86,16 +90,22 @@ class MainWindow(QMainWindow):
         if state:
             self.connect_button.setText(DISCONNECT)
             self.connect_button.setChecked(False)
-            if not self.timer_id:
-                self.timer_id = self.startTimer(int(self.config.params.sync_interval * 1000))
+            if not self.sync_task:
+                self.sync_task = asyncio.create_task(self.sync_cat_relay())
+                self.terminated = False
+            # if not self.timer_id:
+            #     self.timer_id = self.startTimer(int(self.config.params.sync_interval * 1000))
         else:
             self.connect_button.setText(CONNECT)
             self.connect_button.setChecked(True)
 
             # Stop sync timer
-            if self.timer_id:
-                self.killTimer(self.timer_id)
-                self.timer_id = None
+            if self.sync_task:
+                self.terminated = True
+                self.sync_task = None
+            # if self.timer_id:
+            #     self.killTimer(self.timer_id)
+            #     self.timer_id = None
             # Reconnect later
             if self.auto_connect:
                 message = 'Connection failed, will try connect later'
@@ -148,9 +158,12 @@ class MainWindow(QMainWindow):
             self.cat_relay.disconnect_clients()
         self.connection_label.setText("Disconnected")
 
-        if self.timer_id:
-            self.killTimer(self.timer_id)
-            self.timer_id = None
+        if self.sync_task:
+            self.terminated = True
+            self.sync_task = None
+        # if self.timer_id:
+        #     self.killTimer(self.timer_id)
+        #     self.timer_id = None
 
 
     def connect_cat_relay_later(self, error):
@@ -174,8 +187,27 @@ class MainWindow(QMainWindow):
                 if self.sync_label.text() != '':
                     self.sync_label.setText("")
 
+    async def sync_cat_relay(self):
+        while True:
+            if self.terminated:
+                return
+            if self.cat_relay:
+                result = await self.cat_relay.sync()
+                if result:
+                    if result[CHANGED]:
+                        sync_msg = result[MESSAGE]
+                        if sync_msg != self.sync_label.text():
+                            self.sync_label.setText(sync_msg)
+                else:
+                    # Clear last message
+                    if self.sync_label.text() != '':
+                        self.sync_label.setText("")
+            await asyncio.sleep(self.config.params.sync_interval)
 
-app = QApplication(sys.argv)
-main_window = MainWindow()
-main_window.show()
-app.exec()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    main_window = MainWindow()
+    main_window.show()
+    run()  # Starts the Qt & asyncio event loop
