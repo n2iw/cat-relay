@@ -80,7 +80,7 @@ class FlrigClient(Client):
 
     def close(self) -> None:
         if self._flrig:
-            self._flrig.close_connection()
+            self._flrig("close")()
             self._flrig = None
 
     def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
@@ -95,7 +95,7 @@ class FlrigClient(Client):
         if native_mode not in self.NATIVE_TO_CORE_MODES.keys():
             logger.warning(f'Unmapped Core Mode: {mode}')
             return
-        if self.get_mode() != native_mode:
+        if self.get_mode() != mode:
             self._flrig.rig.set_mode(native_mode)
 
     def get_freq(self) -> int:
