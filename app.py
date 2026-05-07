@@ -64,8 +64,6 @@ class MainWindow(QMainWindow):
         self.cat_relay = CatRelay(self.config.params)
         self.cat_relay.connection_state_changed.connect(self.cat_relay_connection_changed)
         self.sync_task = None
-        self.terminated = False
-        self.timer_id = None
         self.auto_connect = False
 
         # Open settings automatically if no config file found
@@ -85,27 +83,18 @@ class MainWindow(QMainWindow):
 
     @Slot(bool)
     def cat_relay_connection_changed(self, state):
-        # print(f'CAT Relay connection status: {state}')
-        # Update button text
         if state:
             self.connect_button.setText(DISCONNECT)
             self.connect_button.setChecked(False)
             if not self.sync_task:
                 self.sync_task = asyncio.create_task(self.sync_cat_relay())
-                self.terminated = False
-            # if not self.timer_id:
-            #     self.timer_id = self.startTimer(int(self.config.params.sync_interval * 1000))
         else:
             self.connect_button.setText(CONNECT)
             self.connect_button.setChecked(True)
 
-            # Stop sync timer
+            # Stop sync task
             if self.sync_task:
-                self.terminated = True
                 self.sync_task = None
-            # if self.timer_id:
-            #     self.killTimer(self.timer_id)
-            #     self.timer_id = None
             # Reconnect later
             if self.auto_connect:
                 message = 'Connection failed, will try connect later'
@@ -159,12 +148,7 @@ class MainWindow(QMainWindow):
         self.connection_label.setText("Disconnected")
 
         if self.sync_task:
-            self.terminated = True
             self.sync_task = None
-        # if self.timer_id:
-        #     self.killTimer(self.timer_id)
-        #     self.timer_id = None
-
 
     def connect_cat_relay_later(self, error):
         # Completely disconnect first
@@ -174,22 +158,10 @@ class MainWindow(QMainWindow):
         self.connection_label.setText(message)
         QTimer.singleShot(self.config.params.reconnect_time * 1000, self.connect_cat_relay)
 
-    def timerEvent(self, event):
-        if self.cat_relay:
-            result = self.cat_relay.sync()
-            if result:
-                if result[CHANGED]:
-                    sync_msg = result[MESSAGE]
-                    if sync_msg != self.sync_label.text():
-                        self.sync_label.setText(sync_msg)
-            else:
-                # Clear last message
-                if self.sync_label.text() != '':
-                    self.sync_label.setText("")
-
     async def sync_cat_relay(self):
         while True:
-            if self.terminated:
+            if self.sync_task is None:
+                logger.info('sync task has been set to None')
                 return
             if self.cat_relay:
                 result = await self.cat_relay.sync()
