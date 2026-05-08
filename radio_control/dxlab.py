@@ -18,7 +18,7 @@ def format_command(field, children = None):
     return f'<{field}:{children_len}>{children}'
 
 
-def parse_frequency(message):
+def parse_frequency(message) -> int | None:
     result = re.match(r"<CmdFreq:\d+> *([\d,]+\.\d+)", message)
     if result:
         freq_str = result.group(1)
@@ -26,13 +26,15 @@ def parse_frequency(message):
         freq_str = freq_str.replace(',', '')
         if freq_str:
             return int(float(freq_str) * 1000)
+    return None
 
 
-def parse_mode(message):
+def parse_mode(message) -> str | None:
     result = re.match(r"<CmdMode:\d+>(\w+)", message)
     if result:
         mode = result.group(1)
         return mode
+    return None
 
 
 def format_freq(freq: int) -> str:
@@ -64,12 +66,12 @@ class Commander(Client):
         if self._tcp is None:
             logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
-        self._tcp.open()
+        await self._tcp.open()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._tcp:
-            self._tcp.close()
+            await self._tcp.close()
             self._tcp = None
 
     async def get_freq(self) -> int:
@@ -77,8 +79,8 @@ class Commander(Client):
             logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
-        self._tcp.send(cmd)
-        freq = parse_frequency(self._tcp.receive())
+        await self._tcp.send(cmd)
+        freq = parse_frequency(await self._tcp.receive())
         if freq is None:
             raise Exception('Failed to get frequency from DXLab')
         return freq
@@ -88,8 +90,8 @@ class Commander(Client):
             logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
-        self._tcp.send(cmd)
-        mode = parse_mode(self._tcp.receive())
+        await self._tcp.send(cmd)
+        mode = parse_mode(await self._tcp.receive())
         if mode is None:
             raise Exception('Failed to get mode from DXLab')
         return self._mapper.get_core_mode(mode)
@@ -108,4 +110,4 @@ class Commander(Client):
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         else:
             return
-        self._tcp.send(cmd)
+        await self._tcp.send(cmd)

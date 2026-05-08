@@ -1,42 +1,46 @@
+import asyncio
 import re
-import socket
 import logging
-from abc import abstractmethod, ABC
 
 BUFFER_SIZE = 1024
 SOCKET_TIMEOUT = 1
 
 logger = logging.getLogger(__name__)
 
-class TCPClient():
-    @abstractmethod
+class TCPClient:
     def __init__(self, ip: str, port: int):
         self._ip = ip
         self._port = port
-        self._sock: socket.socket | None = None
+        self._reader: asyncio.StreamReader | None = None
+        self._writer: asyncio.StreamWriter | None = None
 
-    def open(self):
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.settimeout(SOCKET_TIMEOUT)
-        self._sock.connect((self._ip, self._port))
+    async def open(self):
+        self._reader, self._writer = await asyncio.open_connection(self._ip, self._port, timeout=SOCKET_TIMEOUT)
         return self
 
-    def send(self, message: str) -> None:
-        if not self._sock:
+    async def send(self, message: str) -> None:
+        if not self._writer:
             logger.error('Socket not connected')
             return
-        self._sock.send(bytes(message, 'utf-8'))
+        self._writer.write(bytes(message, 'utf-8'))
+        await self._writer.drain()
 
-    def receive(self) -> str | None:
-        if not self._sock:
+    async def receive(self) -> str | None:
+        if not self._reader:
             logger.error('Socket not connected')
             return None
-        msg = str(self._sock.recv(BUFFER_SIZE))
+        msg = await self._reader.read(BUFFER_SIZE)
         result = re.match(r"b\'(.+)\'", str(msg))
         if result:
             return result.group(1)
+        return None
 
-    def close(self) -> None:
-        if self._sock:
-            self._sock.close()
-            self._sock = None
+    async def close(self) -> None:
+        if self._writer:
+            self._writer.close()
+            await self._writer.wait_closed()
+            self._writer = None
+
+        if self._reader:
+            self._reader.feed_eof()
+            self._reader = None
