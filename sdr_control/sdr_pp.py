@@ -101,55 +101,55 @@ class SdrPPClient(Client):
         self._tcp: TCPClient | None = None
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
-    def open(self) -> None:
+    async def __aenter__(self) -> 'SdrPPClient':
         self._tcp = TCPClient(self._ip, self._port)
         if not self._tcp:
-            logger.error('Failed to connect to SDR++')
-            return
-        self._tcp.open()
+            raise Exception('Failed to connect to SDR++')
+        await self._tcp.open()
+        return self
 
-    def close(self) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._tcp:
-            self._tcp.close()
+            await self._tcp.close()
             self._tcp = None
 
-    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._tcp:
             logger.error('SDR++ is not connected')
             return
         if self.get_mode() != mode:
             native_mode = self._mapper.get_native_mode(mode)
             message = f'M {native_mode} -1\n'
-            self._tcp.send(message)
-            result = self._tcp.receive()
+            await self._tcp.send(message)
+            result = await self._tcp.receive()
             if not parse_result(result):
-                logger.error('Set Hamlib to %s mode failed!', mode)
+                logger.error('Set SDR++ to %s mode failed!', mode)
 
         if self.get_freq() != freq:
             message = f'F {freq}\n'
-            self._tcp.send(message)
-            result = self._tcp.receive()
+            await self._tcp.send(message)
+            result = await self._tcp.receive()
             if not parse_result(result):
-                logger.error('Set Hamlib to %s Hz failed!', freq)
+                logger.error('Set SDR++ to %s Hz failed!', freq)
 
-    def get_freq(self) -> int:
+    async def get_freq(self) -> int:
         if not self._tcp:
             logger.error('SDR++ is not connected')
             raise Exception('SDR++ is not connected')
         message = f'f\n'
-        self._tcp.send(message)
-        freq = parse_frequency(self._tcp.receive())
+        await self._tcp.send(message)
+        freq = parse_frequency(await self._tcp.receive())
         if freq is None:
             raise Exception('Failed to get frequency from SDR++')
         return freq
 
-    def get_mode(self) -> CoreMode:
+    async def get_mode(self) -> CoreMode:
         if not self._tcp:
             logger.error('SDR++ is not connected')
             raise Exception('SDR++ is not connected')
         message = f'm\n'
-        self._tcp.send(message)
-        mode = parse_mode(self._tcp.receive())
+        await self._tcp.send(message)
+        mode = parse_mode(await self._tcp.receive())
         if mode is None:
             raise Exception('Failed to get mode from SDR++')
         return self._mapper.get_core_mode(mode)

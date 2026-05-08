@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import xmlrpc.client
 from requests.exceptions import ConnectionError
 from utils.client import CoreMode, Client
@@ -71,25 +72,29 @@ class FlrigClient(Client):
         self._flrig: xmlrpc.client.ServerProxy | None = None
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
-    def open(self) -> None:
+    async def open(self) -> None:
         try:
-            self._flrig = xmlrpc.client.ServerProxy('http://{}:{}/'.format(self._ip, self._port), transport=RequestsTransport(use_builtin_types=True), allow_none=True)
+            self._flrig = await asyncio.to_thread(
+                xmlrpc.client.ServerProxy,
+                'http://{}:{}/'.format(self._ip, self._port),
+                transport=RequestsTransport(use_builtin_types=True),
+                allow_none=True)
         except ConnectionError as e:
             logger.error('%s', e)
             logger.error('Are you sure flrig is running?')
 
-    def close(self) -> None:
+    async def close(self) -> None:
         if self._flrig:
-            self._flrig("close")()
+            await asyncio.to_thread(self._flrig("close"))
             self._flrig = None
 
-    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._flrig:
             logger.error('Flrig is not connected')
             return
 
-        if self.get_freq() != freq:
-            self._flrig.rig.set_frequency(float(freq))
+        if await self.get_freq() != freq:
+            await asyncio.to_thread(self._flrig.rig.set_frequency, float(freq))
 
         native_mode = self._mapper.get_native_mode(mode)
         if native_mode not in self.NATIVE_TO_CORE_MODES.keys():
@@ -98,22 +103,22 @@ class FlrigClient(Client):
         if self.get_mode() != mode:
             self._flrig.rig.set_mode(native_mode)
 
-    def get_freq(self) -> int:
+    async def get_freq(self) -> int:
         if not self._flrig:
             logger.error('Flrig is not connected')
             raise Exception('Flrig is not connected')
-        raw = self._flrig.rig.get_vfo()
+        raw = await asyncio.to_thread(self._flrig.rig.get_vfo)
         if raw is None:
             logger.error('Failed to get frequency from Flrig')
             raise Exception('Failed to get frequency from Flrig')
         freq = _int_from_xmlrpc(raw)
         return freq
 
-    def get_mode(self) -> CoreMode:
+    async def get_mode(self) -> CoreMode:
         if not self._flrig:
             logger.error('Flrig is not connected')
             raise Exception('Flrig is not connected')
-        raw = self._flrig.rig.get_mode()
+        raw = await asyncio.to_thread(self._flrig.rig.get_mode)
         if raw is None:
             logger.error('Failed to get mode from Flrig')
             raise Exception('Failed to get mode from Flrig')
