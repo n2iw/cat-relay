@@ -17,32 +17,32 @@ class CoreMode(Enum):
 @runtime_checkable
 class Client(Protocol):
 
-    def open(self) -> None:
+    async def __aenter__(self) -> 'Client':
         """
         Open the client and connect your device here.
         """
         ...
 
-    def close(self) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """
         Close the client and disconnect your device here.
         """
         ...
     
-    def get_freq(self) -> int:
+    async def get_freq(self) -> int:
         """
         Get the current frequency from the device.
         """
         ...
     
-    def get_mode(self) -> CoreMode:
+    async def get_mode(self) -> CoreMode:
         """
         Get the current mode from the device.
         Should only return the core mode, not the native mode
         """
         ...
     
-    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         """
         Set the frequency and mode on the device.
         Expect the mode parameter to be a core mode, not the native mode

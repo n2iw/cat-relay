@@ -1,6 +1,7 @@
 import logging
 import sys
 import asyncio
+import threading
 
 from utils.log_config import setup_logging
 
@@ -9,7 +10,6 @@ setup_logging()
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QCheckBox
 from PySide6.QtCore import QTimer, Qt, Slot
-from PySide6.QtAsyncio import run
 
 from cat_relay import CatRelay, MESSAGE, CHANGED
 from config import Config, Parameters
@@ -62,45 +62,41 @@ class MainWindow(QMainWindow):
 
         self.config = Config()
         self.cat_relay = CatRelay(self.config.params)
-        self.cat_relay.connection_state_changed.connect(self.cat_relay_connection_changed)
-        self.sync_task = None
+        self.cat_relay.sync_finished.connect(self.cat_relay_sync_finished)
+        self.sync_thread = None
+        self.sync_terminated = False
         self.auto_connect = False
 
         # Open settings automatically if no config file found
         if not self.config.config_file_full_path:
             self.open_settings()
 
-        # Core function
-        if self.auto_connect:
-            self.connection_label.setText("Connecting...")
-            self.connect_cat_relay()
 
     def connect_clicked(self, checked):
         if not checked:
+            logger.debug('connect not checked')
             self.connect_cat_relay()
-        else:
-            self.disconnect_cat_relay()
-
-    @Slot(bool)
-    def cat_relay_connection_changed(self, state):
-        if state:
             self.connect_button.setText(DISCONNECT)
             self.connect_button.setChecked(False)
-            if not self.sync_task:
-                self.sync_task = asyncio.create_task(self.sync_cat_relay())
+            self.connection_label.setText("Connected")
         else:
+            logger.debug('connect checked')
+            self.disconnect_cat_relay()
             self.connect_button.setText(CONNECT)
             self.connect_button.setChecked(True)
+            self.connection_label.setText("Disconnected")
 
-            # Stop sync task
-            if self.sync_task:
-                self.sync_task = None
-            # Reconnect later
-            if self.auto_connect:
-                message = 'Connection failed, will try connect later'
-                logger.info(message)
-                logger.info('-' * 40)
-                self.connect_cat_relay_later(message)
+    @Slot(bool)
+    def cat_relay_sync_finished(self, result):
+        if result:
+            if result[CHANGED]:
+                sync_msg = result[MESSAGE]
+                if sync_msg != self.sync_label.text():
+                    self.sync_label.setText(sync_msg)
+        else:
+            # Clear last message
+            if self.sync_label.text() != '':
+                self.sync_label.setText("")
 
     def auto_connect_changed(self, state):
         if state == Qt.CheckState.Checked:
@@ -113,8 +109,8 @@ class MainWindow(QMainWindow):
             logger.info('Parameters updated')
             self.config.params = params
             self.config.save_to_file()
-            if self.cat_relay:
-                self.cat_relay.set_params(params)
+            self.cat_relay = CatRelay(self.config.params)
+            self.cat_relay.sync_finished.connect(self.cat_relay_sync_finished)
         else:
             logger.warning('Unknown params object %s', params)
 
@@ -128,53 +124,23 @@ class MainWindow(QMainWindow):
         settings = Settings(self.config.params, self)
         settings.exec()
         self.auto_connect = old_auto_connect
-        if self.auto_connect and not self.connect_button.isChecked():
-            self.connect_cat_relay()
 
     def connect_cat_relay(self):
-        if self.cat_relay:
-            result = self.cat_relay.connect_clients()
-            if result:
-                self.connection_label.setText("Connected")
-            else:
-                self.connection_label.setText("Connection failed")
-        else:
-            logger.error("Cat Relay object doesn't exist!")
-            sys.exit()
+        if not self.sync_thread:
+            # Create a thread that runs the coroutine
+            self.sync_thread = threading.Thread(target=asyncio.run, args=(self.cat_relay.connect_and_run(),))
+            self.sync_terminated = False
+            self.sync_thread.start()
 
     def disconnect_cat_relay(self):
         if self.cat_relay:
-            self.cat_relay.disconnect_clients()
+            self.cat_relay.stop()
         self.connection_label.setText("Disconnected")
 
-        if self.sync_task:
-            self.sync_task = None
-
-    def connect_cat_relay_later(self, error):
-        # Completely disconnect first
-        if self.cat_relay:
-            self.cat_relay.disconnect_clients()
-        message = f'{error}: Retry in {self.config.params.reconnect_time} seconds ...'
-        self.connection_label.setText(message)
-        QTimer.singleShot(self.config.params.reconnect_time * 1000, self.connect_cat_relay)
-
-    async def sync_cat_relay(self):
-        while True:
-            if self.sync_task is None:
-                logger.info('sync task has been set to None')
-                return
-            if self.cat_relay:
-                result = await self.cat_relay.sync()
-                if result:
-                    if result[CHANGED]:
-                        sync_msg = result[MESSAGE]
-                        if sync_msg != self.sync_label.text():
-                            self.sync_label.setText(sync_msg)
-                else:
-                    # Clear last message
-                    if self.sync_label.text() != '':
-                        self.sync_label.setText("")
-            await asyncio.sleep(self.config.params.sync_interval)
+        if self.sync_thread:
+            self.sync_terminated = True
+            self.sync_thread.join()
+            self.sync_thread = None
 
 
 
@@ -182,4 +148,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
-    run()  # Starts the Qt & asyncio event loop
+    app.exec()

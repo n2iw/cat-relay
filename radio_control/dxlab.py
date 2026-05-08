@@ -59,16 +59,20 @@ class Commander(Client):
         self._tcp: TCPClient | None = None
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
-    def open(self) -> None:
+    async def __aenter__(self) -> 'Commander':
         self._tcp = TCPClient(self._ip, self._port)
+        if self._tcp is None:
+            logger.error('DXLab is not connected')
+            raise Exception('DXLab is not connected')
         self._tcp.open()
+        return self
 
-    def close(self) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._tcp:
             self._tcp.close()
             self._tcp = None
 
-    def get_freq(self) -> int:
+    async def get_freq(self) -> int:
         if not self._tcp:
             logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
@@ -79,7 +83,7 @@ class Commander(Client):
             raise Exception('Failed to get frequency from DXLab')
         return freq
 
-    def get_mode(self) -> CoreMode:
+    async def get_mode(self) -> CoreMode:
         if not self._tcp:
             logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
@@ -90,16 +94,16 @@ class Commander(Client):
             raise Exception('Failed to get mode from DXLab')
         return self._mapper.get_core_mode(mode)
 
-    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._tcp:
             logger.error('DXLab is not connected')
             return
 
-        if self.get_mode() != mode:
+        if await self.get_mode() != mode:
             native_mode = self._mapper.get_native_mode(mode)
             parameters = format_command('xcvrfreq', format_freq(freq)) + format_command('xcvrmode', native_mode)
             cmd = format_command('command', 'CmdSetFreqMode') + format_command('parameters', parameters)
-        elif self.get_freq() != freq:
+        elif await self.get_freq() != freq:
             parameters = format_command('xcvrfreq', format_freq(freq))
             cmd = format_command('command', 'CmdSetFreq') + format_command('parameters', parameters)
         else:

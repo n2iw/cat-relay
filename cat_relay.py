@@ -3,6 +3,7 @@
 import logging
 import sys
 import time
+import asyncio
 
 from PySide6.QtCore import QObject, Signal
 
@@ -71,7 +72,7 @@ class ClientType(Enum):
 
 class CatRelay(QObject):
     # Signals
-    connection_state_changed = Signal(bool)
+    sync_finished = Signal(dict)
 
     def __init__(self, params):
         super().__init__()
@@ -84,9 +85,8 @@ class CatRelay(QObject):
         self.sdr_location = params.sdr_location
         self.sdr_ip = params.sdr_ip
         self.sdr_port = params.sdr_port
-
-        self.cat_client: Client|None = None
-        self.sdr_client: Client|None = None
+        self.sync_interval = params.sync_interval
+        self._terminate_clients = False
 
         self.freq_memory: dict[ClientType, int | None] = {
             ClientType.CAT: None,
@@ -97,91 +97,42 @@ class CatRelay(QObject):
             ClientType.SDR: None
         }
 
-    def set_params(self, params):
-        self.cat_location = params.cat_location
-        self.cat_software = params.cat_software
-        self.cat_ip = params.cat_ip
-        self.cat_port = params.cat_port
-        self.radio_info_port = params.radio_info_port
-        self.sdr_software = params.sdr_software
-        self.sdr_location = params.sdr_location
-        self.sdr_ip = params.sdr_ip
-        self.sdr_port = params.sdr_port
+    async def connect_and_run(self):
+        self._terminate_clients = False
+        async with self._create_cat_client() as cat_client:
+            async with self._create_sdr_client() as sdr_client:
+                while True:
+                    if self._terminate_clients:
+                        return
+                    await self.sync(cat_client, sdr_client)
+                    await asyncio.sleep(self.sync_interval)
 
-    def is_connected(self):
-        return self.cat_client is not None and self.sdr_client is not None
+    def stop(self):
+        self._terminate_clients = True
 
-    def connect_clients(self):
-        try:
-            self._connect_cat()
-            logger.info('Cat Software connected')
-
-            self._connect_sdr()
-            logger.info('SDR connected.')
-
-        except Exception as e:
-            logger.exception(f'Connection failed: {e}')
-            self.disconnect_clients()
-
-        finally:
-            self.connection_state_changed.emit(self.is_connected())
-            return self.is_connected()
-
-
-    def disconnect_clients(self):
-        # save current state
-        old_state = self.is_connected()
-
-        if self.cat_client:
-            self.cat_client.close()
-            self.cat_client = None
-            logger.info('Cat Software disconnected')
-
-        if self.sdr_client:
-            self.sdr_client.close()
-            self.sdr_client = None
-            logger.info('SDR disconnected.')
-
-        new_state = self.is_connected()
-        if old_state != new_state:
-            self.connection_state_changed.emit(self.is_connected())
-
-    def __del__(self):
-        self.disconnect_clients()
-
-    def _connect_sdr(self) -> None:
+    def _create_sdr_client(self) -> Client:
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
         logger.info('Connecting to %s at %s:%s', self.sdr_software, ip_address, self.sdr_port)
         if self.sdr_software == SDR_CONNECT:
-            self.sdr_client = SdrConnectClient(ip_address, self.sdr_port)
-            if self.sdr_client:
-                self.sdr_client.open()
+            return SdrConnectClient(ip_address, self.sdr_port)
         elif self.sdr_software == SDR_PP:
-            self.sdr_client = SdrPPClient(ip_address, self.sdr_port)
-            if self.sdr_client:
-                self.sdr_client.open()
+            return SdrPPClient(ip_address, self.sdr_port)
         else:
             message = f'SDR software "{self.sdr_software}" is not supported!'
             logger.error(message)
             raise Exception(message)
 
-    def _connect_cat(self) -> None:
+    def _create_cat_client(self) -> Client:
         ip_address = self.cat_ip if self.cat_location == NETWORK else LOCAL_HOST
         if self.cat_software in [DXLAB, RUMLOG] :
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            self.cat_client = Commander(ip_address, self.cat_port)
-            if self.cat_client:
-                self.cat_client.open()
+            return Commander(ip_address, self.cat_port)
         elif self.cat_software == N1MM:
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            self.cat_client = N1MMClient(self.radio_info_port, ip_address, self.cat_port)
-            if self.cat_client:
-                self.cat_client.open()
+            return N1MMClient(self.radio_info_port, ip_address, self.cat_port)
         elif self.cat_software == FLRIG:
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            self.cat_client = FlrigClient(ip_address, self.cat_port)
-            if self.cat_client:
-                self.cat_client.open()
+            return FlrigClient(ip_address, self.cat_port)
         else:
             message = f'Cat software "{self.cat_software}" is not supported!'
             logger.error(message)
@@ -201,43 +152,44 @@ class CatRelay(QObject):
         else:
             return False
 
-    async def sync(self):
+    async def sync(self, cat_client: Client, sdr_client: Client) -> bool:
         try:
-            if not self.cat_client or not self.sdr_client:
+            if not cat_client or not sdr_client:
                 logger.error('Cat or SDR client not connected')
-                return None
-            radio_freq = self.cat_client.get_freq()
-            radio_mode = self.cat_client.get_mode()
-            sdr_freq = self.sdr_client.get_freq()
-            sdr_mode = self.sdr_client.get_mode()
+                return False
+            radio_freq = await cat_client.get_freq()
+            radio_mode = await cat_client.get_mode()
+            sdr_freq = await sdr_client.get_freq()
+            sdr_mode = await sdr_client.get_mode()
             radio_freq_changed = self.update_freq_memory(ClientType.CAT, radio_freq)
             radio_mode_changed = self.update_mode_memory(ClientType.CAT, radio_mode)
             sdr_freq_changed = self.update_freq_memory(ClientType.SDR, sdr_freq)
             sdr_mode_changed = self.update_mode_memory(ClientType.SDR, sdr_mode)
             if radio_freq_changed or radio_mode_changed:
                 if radio_freq != sdr_freq or radio_mode != sdr_mode:
-                    self.sdr_client.set_freq_mode(radio_freq, radio_mode)
-                    return sync_result(True, 'radio', 'SDR', radio_freq, radio_mode.value)
+                    await sdr_client.set_freq_mode(radio_freq, radio_mode)
+                    self.sync_finished.emit(sync_result(True, 'radio', 'SDR', radio_freq, radio_mode.value))
+                    return True
             elif sdr_freq_changed or sdr_mode_changed:
                 if sdr_freq != radio_freq or sdr_mode != radio_mode:
-                    self.cat_client.set_freq_mode(sdr_freq, sdr_mode)
-                    return sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode.value)
-            return sync_result(False)
+                    await cat_client.set_freq_mode(sdr_freq, sdr_mode)
+                    self.sync_finished.emit(sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode.value))
+                    return True
+            return False
         except Exception as e:
             logger.exception(f'Sync failed: {e}')
-            self.connection_state_changed.emit(self.is_connected())
-            return None
+            return False
 
-def main():
+async def main():
     setup_logging()
     # reconnect every RETRY_TIME seconds, until user presses Ctrl+C
     params = Config().params
     while True:
         try:
             cat_relay = CatRelay(params)
-            cat_relay.connect_clients()
+            await cat_relay.connect_clients()
             while True:
-                result = cat_relay.sync()
+                result = await cat_relay.sync()
                 if result:
                     if result[CHANGED]:
                         logger.info(result[MESSAGE])
@@ -256,7 +208,7 @@ def main():
             time.sleep(retry_time)
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
 
 
 
