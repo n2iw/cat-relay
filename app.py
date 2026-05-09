@@ -95,6 +95,8 @@ class MainWindow(QMainWindow):
         self.connect_button.setText(CONNECT)
         self.connect_button.setChecked(True)
         self.connection_label.setText("Not connected")
+        if self.auto_connect:
+            QTimer.singleShot(self.config.params.reconnect_time * 1000, self.handle_auto_connect_timer)
 
     @Slot(dict)
     def handle_sync_finished(self, result):
@@ -108,6 +110,9 @@ class MainWindow(QMainWindow):
             if self.sync_label.text() != '':
                 self.sync_label.setText("")
 
+    def handle_auto_connect_timer(self):
+        if self.auto_connect:
+            self.connect_cat_relay()
 
     def auto_connect_changed(self, state):
         if state == Qt.CheckState.Checked:
