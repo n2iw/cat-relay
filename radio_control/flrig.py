@@ -72,7 +72,7 @@ class FlrigClient(Client):
         self._flrig: xmlrpc.client.ServerProxy | None = None
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
-    async def open(self) -> None:
+    async def __aenter__(self) -> 'FlrigClient':
         try:
             self._flrig = await asyncio.to_thread(
                 xmlrpc.client.ServerProxy,
@@ -82,8 +82,9 @@ class FlrigClient(Client):
         except ConnectionError as e:
             logger.error('%s', e)
             logger.error('Are you sure flrig is running?')
+        return self
 
-    async def close(self) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._flrig:
             await asyncio.to_thread(self._flrig("close"))
             self._flrig = None
@@ -100,7 +101,7 @@ class FlrigClient(Client):
         if native_mode not in self.NATIVE_TO_CORE_MODES.keys():
             logger.warning(f'Unmapped Core Mode: {mode}')
             return
-        if self.get_mode() != mode:
+        if await self.get_mode() != mode:
             self._flrig.rig.set_mode(native_mode)
 
     async def get_freq(self) -> int:

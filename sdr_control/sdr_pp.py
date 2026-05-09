@@ -117,7 +117,7 @@ class SdrPPClient(Client):
         if not self._tcp:
             logger.error('SDR++ is not connected')
             return
-        if self.get_mode() != mode:
+        if await self.get_mode() != mode:
             native_mode = self._mapper.get_native_mode(mode)
             message = f'M {native_mode} -1\n'
             await self._tcp.send(message)
@@ -125,7 +125,7 @@ class SdrPPClient(Client):
             if not parse_result(result):
                 logger.error('Set SDR++ to %s mode failed!', mode)
 
-        if self.get_freq() != freq:
+        if await self.get_freq() != freq:
             message = f'F {freq}\n'
             await self._tcp.send(message)
             result = await self._tcp.receive()

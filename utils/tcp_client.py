@@ -15,7 +15,7 @@ class TCPClient:
         self._writer: asyncio.StreamWriter | None = None
 
     async def open(self):
-        self._reader, self._writer = await asyncio.open_connection(self._ip, self._port, timeout=SOCKET_TIMEOUT)
+        self._reader, self._writer = await asyncio.open_connection(self._ip, self._port)
         return self
 
     async def send(self, message: str) -> None:
