@@ -73,6 +73,8 @@ class ClientType(Enum):
 class CatRelay(QObject):
     # Signals
     sync_finished = Signal(dict)
+    clients_connected = Signal()
+    clients_disconnected = Signal()
 
     def __init__(self, params):
         super().__init__()
@@ -98,14 +100,25 @@ class CatRelay(QObject):
         }
 
     async def connect_and_run(self):
-        self._terminate_clients = False
-        async with self._create_cat_client() as cat_client:
-            async with self._create_sdr_client() as sdr_client:
-                while True:
-                    if self._terminate_clients:
+        try:
+            self._terminate_clients = False
+            async with self._create_cat_client() as cat_client:
+                async with self._create_sdr_client() as sdr_client:
+                    if not cat_client or not sdr_client:
+                        logger.error('Cat or SDR client not connected')
+                        self.clients_disconnected.emit()
                         return
-                    await self.sync(cat_client, sdr_client)
-                    await asyncio.sleep(self.sync_interval)
+                    else:
+                        self.clients_connected.emit()
+                    while True:
+                        if self._terminate_clients:
+                            self.clients_disconnected.emit()
+                            return
+                        await self.sync(cat_client, sdr_client)
+                        await asyncio.sleep(self.sync_interval)
+        except Exception as e:
+            logger.error(f'Unexpected error during relay operation: {e}')
+            self.clients_disconnected.emit()
 
     def stop(self):
         self._terminate_clients = True
@@ -156,6 +169,7 @@ class CatRelay(QObject):
         try:
             if not cat_client or not sdr_client:
                 logger.error('Cat or SDR client not connected')
+                self.clients_disconnected.emit()
                 return False
             radio_freq = await cat_client.get_freq()
             radio_mode = await cat_client.get_mode()
@@ -184,28 +198,19 @@ async def main():
     setup_logging()
     # reconnect every RETRY_TIME seconds, until user presses Ctrl+C
     params = Config().params
-    while True:
-        try:
-            cat_relay = CatRelay(params)
-            await cat_relay.connect_clients()
-            while True:
-                result = await cat_relay.sync()
-                if result:
-                    if result[CHANGED]:
-                        logger.info(result[MESSAGE])
-                else:
-                    logger.warning('Sync failed')
-                time.sleep(params.sync_interval)
+    try:
+        cat_relay = CatRelay(params)
+        await cat_relay.connect_and_run()
 
-        except KeyboardInterrupt:
-            logger.info('Terminated by user.')
-            sys.exit()
-        except Exception  as e:
-            retry_time = params.reconnect_time
-            logger.exception(f'Error in main loop {e}')
-            logger.info('Retry in %s seconds ...', retry_time)
-            logger.info('Press Ctrl+C to exit')
-            time.sleep(retry_time)
+    except KeyboardInterrupt:
+        logger.info('Terminated by user.')
+        sys.exit()
+    except Exception  as e:
+        retry_time = params.reconnect_time
+        logger.exception(f'Error in main loop {e}')
+        logger.info('Retry in %s seconds ...', retry_time)
+        logger.info('Press Ctrl+C to exit')
+        time.sleep(retry_time)
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -64,8 +64,7 @@ class Commander(Client):
     async def __aenter__(self) -> 'Commander':
         self._tcp = TCPClient(self._ip, self._port)
         if self._tcp is None:
-            logger.error('DXLab is not connected')
-            raise Exception('DXLab is not connected')
+            raise Exception('Fail to connect to DXLab')
         await self._tcp.open()
         return self
 

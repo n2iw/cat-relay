@@ -73,15 +73,13 @@ class FlrigClient(Client):
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
     async def __aenter__(self) -> 'FlrigClient':
-        try:
-            self._flrig = await asyncio.to_thread(
-                xmlrpc.client.ServerProxy,
-                'http://{}:{}/'.format(self._ip, self._port),
-                transport=RequestsTransport(use_builtin_types=True),
-                allow_none=True)
-        except ConnectionError as e:
-            logger.error('%s', e)
-            logger.error('Are you sure flrig is running?')
+        self._flrig = await asyncio.to_thread(
+            xmlrpc.client.ServerProxy,
+            'http://{}:{}/'.format(self._ip, self._port),
+            transport=RequestsTransport(use_builtin_types=True),
+            allow_none=True)
+        if not self._flrig:
+            raise Exception('Fail to connect to Flrig')
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:

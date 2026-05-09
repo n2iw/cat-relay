@@ -62,32 +62,44 @@ class MainWindow(QMainWindow):
 
         self.config = Config()
         self.cat_relay = CatRelay(self.config.params)
-        self.cat_relay.sync_finished.connect(self.cat_relay_sync_finished)
+        self.connect_cat_relay_signals()
         self.sync_thread = None
-        self.sync_terminated = False
         self.auto_connect = False
 
         # Open settings automatically if no config file found
         if not self.config.config_file_full_path:
             self.open_settings()
 
+    def connect_cat_relay_signals(self):
+        self.cat_relay.sync_finished.connect(self.handle_sync_finished)
+        self.cat_relay.clients_connected.connect(self.handle_clients_connected)
+        self.cat_relay.clients_disconnected.connect(self.handle_clients_disconnected)
+
 
     def connect_clicked(self, checked):
         if not checked:
-            logger.debug('connect not checked')
-            self.connect_cat_relay()
             self.connect_button.setText(DISCONNECT)
-            self.connect_button.setChecked(False)
-            self.connection_label.setText("Connected")
+            # self.connect_button.setChecked(False)
+            self.connect_cat_relay()
         else:
-            logger.debug('connect checked')
-            self.disconnect_cat_relay()
             self.connect_button.setText(CONNECT)
-            self.connect_button.setChecked(True)
-            self.connection_label.setText("Disconnected")
+            # self.connect_button.setChecked(True)
+            self.disconnect_cat_relay()
 
-    @Slot(bool)
-    def cat_relay_sync_finished(self, result):
+    @Slot()
+    def handle_clients_connected(self):
+        self.connect_button.setText(DISCONNECT)
+        self.connect_button.setChecked(False)
+        self.connection_label.setText("Connected")
+
+    @Slot()
+    def handle_clients_disconnected(self):
+        self.connect_button.setText(CONNECT)
+        self.connect_button.setChecked(True)
+        self.connection_label.setText("Disconnected")
+
+    @Slot(dict)
+    def handle_sync_finished(self, result):
         if result:
             if result[CHANGED]:
                 sync_msg = result[MESSAGE]
@@ -97,6 +109,7 @@ class MainWindow(QMainWindow):
             # Clear last message
             if self.sync_label.text() != '':
                 self.sync_label.setText("")
+
 
     def auto_connect_changed(self, state):
         if state == Qt.CheckState.Checked:
@@ -110,7 +123,7 @@ class MainWindow(QMainWindow):
             self.config.params = params
             self.config.save_to_file()
             self.cat_relay = CatRelay(self.config.params)
-            self.cat_relay.sync_finished.connect(self.cat_relay_sync_finished)
+            self.connect_cat_relay_signals()
         else:
             logger.warning('Unknown params object %s', params)
 
@@ -126,19 +139,18 @@ class MainWindow(QMainWindow):
         self.auto_connect = old_auto_connect
 
     def connect_cat_relay(self):
-        if not self.sync_thread:
+        if not self.sync_thread or not self.sync_thread.is_alive():
             # Create a thread that runs the coroutine
             self.sync_thread = threading.Thread(target=asyncio.run, args=(self.cat_relay.connect_and_run(),))
-            self.sync_terminated = False
             self.sync_thread.start()
+        else:
+            logger.warning('Sync thread is already running')
 
     def disconnect_cat_relay(self):
         if self.cat_relay:
             self.cat_relay.stop()
-        self.connection_label.setText("Disconnected")
 
         if self.sync_thread:
-            self.sync_terminated = True
             self.sync_thread.join()
             self.sync_thread = None
 

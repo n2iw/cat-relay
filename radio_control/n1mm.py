@@ -72,6 +72,8 @@ class N1MMClient(Client):
                 lambda: N1MMProtocol(),
                 local_addr=('0.0.0.0', self.listen_port)
             )
+            if not self._listen_transport or not self.n1mm:
+                raise Exception('Fail to create N1MM radio info endpoint')
         return self
 
     async def send(self, message):

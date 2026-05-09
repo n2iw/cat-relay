@@ -57,18 +57,16 @@ class SdrConnectClient(Client):
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
     async def __aenter__(self) -> 'SdrConnectClient':
-        try:
-            self._terminated = False
-            self._ws = await connect(f'ws://{self._ip}:{self._port}')
+        self._terminated = False
+        self._ws = await connect(f'ws://{self._ip}:{self._port}')
+        if not self._ws:
+            raise Exception('Fail to connect to SDR Connect')
 
-            await self._query_device_frequency()
-            await self._query_device_mode()
-            if self._listen_task is None:
-                self._listen_task = asyncio.create_task(self.listen())
-            return self
-        except Exception as e:
-            logger.error(f'Failed to connect to SdrConnect at {self._ip}:{self._port}: {e}')
-            raise e
+        await self._query_device_frequency()
+        await self._query_device_mode()
+        if self._listen_task is None:
+            self._listen_task = asyncio.create_task(self.listen())
+        return self
 
     # This function will be running in a separate thread and updates self._last_mode and self._last_freq
     async def listen(self):
