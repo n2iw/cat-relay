@@ -2,7 +2,7 @@ import logging
 import socket
 import threading
 
-from radio_control.radio_info import get_radio_info, set_frequency_message
+from radio_control.utils.radio_info import get_radio_info, set_frequency_message
 from utils.client import CoreMode, Client
 from utils.mode_mapper import ModeMapper
 
@@ -42,13 +42,14 @@ class N1MMClient(Client):
         self.thread = None
         self._mapper = ModeMapper({}, {})
 
-    def open(self) -> None:
+    async def __aenter__(self) -> 'N1MMClient':
         if not self.listen_sock or not self.send_sock:
             logger.error('Listen or send socket not created')
             raise Exception('Listen or send socket not created')
         self.listen_sock.bind(('0.0.0.0', self.listen_port))
         self.thread = threading.Thread(target=self.listen)
         self.thread.start()
+        return self
 
     # This function will be running in a separate thread and updates self.last_mode and self.last_freq
     def listen(self):
@@ -83,7 +84,7 @@ class N1MMClient(Client):
         data, addr = self.listen_sock.recvfrom(1024)  # buffer size is 1024 bytes
         return data.decode('utf-8')
 
-    def close(self):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         self.terminated = True
         if self.thread:
             self.thread.join()
@@ -94,16 +95,16 @@ class N1MMClient(Client):
             self.send_sock.close()
             self.send_sock = None
 
-    def get_freq(self) -> int:
+    async def get_freq(self) -> int:
         return self._last_freq
 
-    def get_mode(self) -> CoreMode:
+    async def get_mode(self) -> CoreMode:
         if not self._last_mode:
             raise Exception('Mode is not set')
         return self._mapper.get_core_mode(self._last_mode)
 
     # Only set frequency, setting mode is not supported in N1MM
-    def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         cmd = set_frequency_message(freq)
         if cmd:
             self._last_freq = freq

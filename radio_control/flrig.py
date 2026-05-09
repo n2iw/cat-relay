@@ -5,7 +5,7 @@ from requests.exceptions import ConnectionError
 from utils.client import CoreMode, Client
 from utils.mode_mapper import ModeMapper
 
-from radio_control.transport import RequestsTransport
+from radio_control.utils.transport import RequestsTransport
 
 logger = logging.getLogger(__name__)
 
