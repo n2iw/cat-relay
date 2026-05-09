@@ -79,11 +79,9 @@ class MainWindow(QMainWindow):
     def connect_clicked(self, checked):
         if not checked:
             self.connect_button.setText(DISCONNECT)
-            # self.connect_button.setChecked(False)
             self.connect_cat_relay()
         else:
             self.connect_button.setText(CONNECT)
-            # self.connect_button.setChecked(True)
             self.disconnect_cat_relay()
 
     @Slot()
@@ -96,7 +94,7 @@ class MainWindow(QMainWindow):
     def handle_clients_disconnected(self):
         self.connect_button.setText(CONNECT)
         self.connect_button.setChecked(True)
-        self.connection_label.setText("Disconnected")
+        self.connection_label.setText("Not connected")
 
     @Slot(dict)
     def handle_sync_finished(self, result):
