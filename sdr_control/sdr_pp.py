@@ -90,6 +90,7 @@ class SdrPPClient(Client):
     NATIVE_TO_CORE_MODES = {
         'WFM': CoreMode.FM,  # WFM mode from SDR Connect will be converted to WFM mode
         'DSB': CoreMode.AM,  # DSB mode from SDR Connect will be converted to AM mode
+        'RAW': CoreMode.NOT_SUPPORTED
     }
 
     CORE_TO_NATIVE_MODES = {

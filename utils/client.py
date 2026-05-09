@@ -13,6 +13,7 @@ class CoreMode(Enum):
     USB = 'USB'
     LSB = 'LSB'
     CW = 'CW'
+    NOT_SUPPORTED = 'NOT_SUPPORTED'
 
 @runtime_checkable
 class Client(Protocol):

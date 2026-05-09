@@ -158,12 +158,21 @@ class CatRelay(QObject):
         else:
             return False
 
-    def update_mode_memory(self, client: ClientType, new_mode: CoreMode) -> bool:
+    def update_mode_memory(self, client: ClientType, new_mode: CoreMode | None) -> bool:
+        if not new_mode:
+            return False
         if new_mode != self.mode_memory[client]:
             self.mode_memory[client] = new_mode
             return True
         else:
             return False
+
+    def map_unsupported_cord_mode(self, mode: CoreMode, client_type: ClientType) -> CoreMode | None:
+        if mode == CoreMode.NOT_SUPPORTED:
+            previous_mode = self.mode_memory[client_type]
+            return previous_mode if previous_mode else None
+        else:
+            return mode
 
     async def sync(self, cat_client: Client, sdr_client: Client) -> bool:
         try:
@@ -172,19 +181,19 @@ class CatRelay(QObject):
                 self.clients_disconnected.emit()
                 return False
             radio_freq = await cat_client.get_freq()
-            radio_mode = await cat_client.get_mode()
+            radio_mode = self.map_unsupported_cord_mode(await cat_client.get_mode(), ClientType.CAT)
             sdr_freq = await sdr_client.get_freq()
-            sdr_mode = await sdr_client.get_mode()
+            sdr_mode = self.map_unsupported_cord_mode(await sdr_client.get_mode(), ClientType.SDR)
             radio_freq_changed = self.update_freq_memory(ClientType.CAT, radio_freq)
             radio_mode_changed = self.update_mode_memory(ClientType.CAT, radio_mode)
             sdr_freq_changed = self.update_freq_memory(ClientType.SDR, sdr_freq)
             sdr_mode_changed = self.update_mode_memory(ClientType.SDR, sdr_mode)
-            if radio_freq_changed or radio_mode_changed:
+            if (radio_freq_changed or radio_mode_changed) and radio_mode:
                 if radio_freq != sdr_freq or radio_mode != sdr_mode:
                     await sdr_client.set_freq_mode(radio_freq, radio_mode)
                     self.sync_finished.emit(sync_result(True, 'radio', 'SDR', radio_freq, radio_mode.value))
                     return True
-            elif sdr_freq_changed or sdr_mode_changed:
+            elif (sdr_freq_changed or sdr_mode_changed) and sdr_mode:
                 if sdr_freq != radio_freq or sdr_mode != radio_mode:
                     await cat_client.set_freq_mode(sdr_freq, sdr_mode)
                     self.sync_finished.emit(sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode.value))
