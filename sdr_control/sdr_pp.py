@@ -134,7 +134,6 @@ class SdrPPClient(Client):
 
     async def get_freq(self) -> int:
         if not self._tcp:
-            logger.error('SDR++ is not connected')
             raise Exception('SDR++ is not connected')
         message = f'f\n'
         await self._tcp.send(message)
@@ -145,7 +144,6 @@ class SdrPPClient(Client):
 
     async def get_mode(self) -> CoreMode:
         if not self._tcp:
-            logger.error('SDR++ is not connected')
             raise Exception('SDR++ is not connected')
         message = f'm\n'
         await self._tcp.send(message)

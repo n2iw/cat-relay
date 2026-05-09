@@ -113,14 +113,12 @@ class SdrConnectClient(Client):
 
     async def get_freq(self) -> int:
         if not self._last_freq:
-            logger.error('Frequency is not set')
-            raise Exception('Frequency is not set')
+            raise Exception('SDR Connect Frequency not available')
         return self._last_freq
 
     async def get_mode(self) -> CoreMode:
         if not self._last_mode:
-            logger.error('Mode is not set')
-            raise Exception('Mode is not set')
+            raise Exception('SDR Connect Mode not available')
         return self._mapper.get_core_mode(self._last_mode)
 
     async def _query_device_frequency(self) -> int | None:

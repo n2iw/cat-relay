@@ -39,7 +39,6 @@ class N1MMProtocol(asyncio.DatagramProtocol):
         self.transport = transport
 
     def datagram_received(self, data, addr):
-        logger.info(f"Received {data.decode()} from {addr}")
         if not data:
             logger.error('No data received')
         freq, mode = parse_frequency_mode(data.decode('utf-8'))
@@ -95,6 +94,11 @@ class N1MMClient(Client):
             self.n1mm = None
 
     async def get_freq(self) -> int:
+        if not self.n1mm:
+            raise Exception('N1MM not connected')
+        freq = self.n1mm.get_freq()
+        if not freq:
+            raise Exception('N1MM Frequency not available')
         return self.n1mm.get_freq()
 
     async def get_mode(self) -> CoreMode:
@@ -103,7 +107,7 @@ class N1MMClient(Client):
 
         mode = self.n1mm.get_mode()
         if not mode:
-            raise Exception('Mode is not set')
+            raise Exception('N1MM Mode not available')
         return self._mapper.get_core_mode(mode)
 
     # Only set frequency, setting mode is not supported in N1MM

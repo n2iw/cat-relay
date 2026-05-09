@@ -75,7 +75,6 @@ class Commander(Client):
 
     async def get_freq(self) -> int:
         if not self._tcp:
-            logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         await self._tcp.send(cmd)
@@ -86,7 +85,6 @@ class Commander(Client):
 
     async def get_mode(self) -> CoreMode:
         if not self._tcp:
-            logger.error('DXLab is not connected')
             raise Exception('DXLab is not connected')
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         await self._tcp.send(cmd)
