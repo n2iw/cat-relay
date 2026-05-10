@@ -1,4 +1,3 @@
-import copy
 import logging
 
 from PySide6.QtCore import Slot
@@ -22,11 +21,11 @@ class Settings(QDialog):
 
         # Set up UI
         self.parent_window = parent
-        self.radio_info_widget: TextInput
-        self.sdr_ip_widget: TextInput
-        self.sdr_port_widget: TextInput
-        self.cat_ip_widget: TextInput
-        self.cat_port_widget: TextInput
+        self.radio_info_widget = TextInput('Radio Info Port', self.params.radio_info_port, lambda port: self.params.set_radio_info_port(port), self.params.cat_software == N1MM, INTEGER)
+        self.sdr_ip_widget = TextInput("SDR IP", self.params.sdr_ip, lambda ip: self.params.set_sdr_ip(ip), self.params.sdr_location == NETWORK)
+        self.sdr_port_widget = TextInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port), True, INTEGER)
+        self.cat_ip_widget = TextInput('CAT IP', self.params.cat_ip, lambda ip: self.params.set_cat_ip(ip), self.params.cat_location == NETWORK)
+        self.cat_port_widget = TextInput('CAT Port', self.params.cat_port, lambda port: self.params.set_cat_port(port), True, INTEGER)
         self.setWindowTitle("Settings")
         self.setLayout(self.create_layout())
 
@@ -46,10 +45,8 @@ class Settings(QDialog):
         # SDR Location
         layout.addWidget(Dropdown("SDR running on", self.params.sdr_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_sdr_location(location)))
         # SDR IP
-        self.sdr_ip_widget = TextInput("SDR IP", self.params.sdr_ip, lambda ip: self.params.set_sdr_ip(ip), self.params.sdr_location == NETWORK)
         layout.addWidget(self.sdr_ip_widget)
         # SDR Port
-        self.sdr_port_widget = TextInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port), True, INTEGER)
         layout.addWidget(self.sdr_port_widget)
 
         # CAT Software
@@ -57,14 +54,11 @@ class Settings(QDialog):
         # CAT Location
         layout.addWidget(Dropdown("CAT running on", self.params.cat_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_cat_location(location)))
         # CAT IP
-        self.cat_ip_widget = TextInput('CAT IP', self.params.cat_ip, lambda ip: self.params.set_cat_ip(ip), self.params.cat_location == NETWORK)
         layout.addWidget(self.cat_ip_widget)
         # CAT Port
-        self.cat_port_widget = TextInput('CAT Port', self.params.cat_port, lambda port: self.params.set_cat_port(port), True, INTEGER)
         layout.addWidget(self.cat_port_widget)
 
         # Radio Info Port (only show when it's N1MM)
-        self.radio_info_widget = TextInput('Radio Info Port', self.params.radio_info_port, lambda port: self.params.set_radio_info_port(port), self.params.cat_software == N1MM, INTEGER)
         layout.addWidget(self.radio_info_widget)
 
         # Reconnect time
@@ -78,7 +72,7 @@ class Settings(QDialog):
         layout.addWidget(log_files_line)
 
         # Action Buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Ok)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

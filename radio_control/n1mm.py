@@ -44,6 +44,7 @@ class N1MMProtocol(asyncio.DatagramProtocol):
         freq, mode = parse_frequency_mode(data.decode('utf-8'))
         if freq:
             self._last_freq = freq
+        if mode:
             self._last_mode = mode
 
     def get_freq(self) -> int:
@@ -62,7 +63,7 @@ class N1MMClient(Client):
         self.thread = None
         self._mapper = ModeMapper({}, {})
         self.n1mm: N1MMProtocol | None = None
-        self._listen_transport: asyncio.DatagramTransport = None
+        self._listen_transport: asyncio.DatagramTransport | None = None
 
     async def __aenter__(self) -> 'N1MMClient':
         if self.n1mm is None:
