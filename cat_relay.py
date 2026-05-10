@@ -4,8 +4,8 @@ import logging
 import sys
 import time
 import asyncio
-
 from PySide6.QtCore import QObject, Signal
+from requests.exceptions import ConnectionError
 
 from utils.log_config import setup_logging
 
@@ -199,6 +199,9 @@ class CatRelay(QObject):
                     self.sync_finished.emit(sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode.value))
                     return True
             return False
+        except (ConnectionResetError, BrokenPipeError, ConnectionError) as e:
+            logger.error(f'Client disconnected while syncing')
+            raise e
         except Exception as e:
             logger.error(f'Sync failed: {str(e)}')
             return False

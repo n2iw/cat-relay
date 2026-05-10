@@ -1,7 +1,6 @@
 import logging
 import asyncio
 import xmlrpc.client
-from requests.exceptions import ConnectionError
 from utils.client import CoreMode, Client
 from utils.mode_mapper import ModeMapper
 
