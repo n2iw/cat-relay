@@ -1,8 +1,10 @@
 # This module is a client for the SDR Connect software provided by SDRPlay
 import asyncio
 import logging
-from websockets.asyncio.client import connect, ClientConnection
 import json
+
+from websockets.asyncio.client import connect, ClientConnection
+
 from utils.client import CoreMode, Client
 from utils.mode_mapper import ModeMapper
 
@@ -52,12 +54,10 @@ class SdrConnectClient(Client):
         self._port = port
         self._ws: ClientConnection | None = None
         self._listen_task = None
-        self._terminated = False
 
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
     async def __aenter__(self) -> 'SdrConnectClient':
-        self._terminated = False
         self._ws = await connect(f'ws://{self._ip}:{self._port}')
         if not self._ws:
             raise Exception('Fail to connect to SDR Connect')
@@ -68,25 +68,6 @@ class SdrConnectClient(Client):
             self._listen_task = asyncio.create_task(self.listen())
         return self
 
-    # This function will be running in a separate thread and updates self._last_mode and self._last_freq
-    async def listen(self):
-        if not self._ws:
-            logger.error('SDR Connect is not connected')
-            return
-        logger.info('listening from SdrConnect')
-        while True:
-            if self._listen_task is None:
-                return
-            async for message in self._ws:
-                response = json.loads(message)
-                if response['event_type'] == 'property_changed':
-                    if response['property'] == FREQUENCY_PROPERTY:
-                        self._last_freq = int(response['value'])
-                    elif response['property'] == MODE_PROPERTY:
-                        native_mode = response['value']
-                        self._last_mode = native_mode
-
-
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         self._listen_task = None
         if self._ws:
@@ -94,11 +75,33 @@ class SdrConnectClient(Client):
             self._ws = None
             self._last_mode = None
             self._last_freq = None
-    
-    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+
+
+    # This function will be running in a separate thread and updates self._last_mode and self._last_freq
+    async def listen(self):
         if not self._ws:
             logger.error('SDR Connect is not connected')
             return
+        logger.info('listening from SdrConnect')
+        try:
+            async for message in self._ws:
+                if self._listen_task is None:
+                    return
+                response = json.loads(message)
+                if response['event_type'] == 'property_changed':
+                    if response['property'] == FREQUENCY_PROPERTY:
+                        self._last_freq = int(response['value'])
+                    elif response['property'] == MODE_PROPERTY:
+                        native_mode = response['value']
+                        self._last_mode = native_mode
+        except Exception as e:
+            logger.error(e)
+            self._ws = None
+
+
+    async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
+        if not self._ws:
+            raise ConnectionResetError('SDR Connect is disconnected')
 
         command = set_frequency_message(freq)
         await self._ws.send(command)
@@ -112,11 +115,15 @@ class SdrConnectClient(Client):
 
 
     async def get_freq(self) -> int:
+        if not self._ws:
+            raise ConnectionResetError('SDR Connect is disconnected')
         if not self._last_freq:
             raise Exception('SDR Connect Frequency not available')
         return self._last_freq
 
     async def get_mode(self) -> CoreMode:
+        if not self._ws:
+            raise ConnectionResetError('SDR Connect is disconnected')
         if not self._last_mode:
             raise Exception('SDR Connect Mode not available')
         return self._mapper.get_core_mode(self._last_mode)
