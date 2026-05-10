@@ -94,6 +94,9 @@ class SdrConnectClient(Client):
                     elif response['property'] == MODE_PROPERTY:
                         native_mode = response['value']
                         self._last_mode = native_mode
+
+            logger.info('SDR Connect disconnected')
+            self._ws = None
         except Exception as e:
             logger.error(e)
             self._ws = None

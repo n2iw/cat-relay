@@ -95,6 +95,7 @@ class MainWindow(QMainWindow):
         self.connect_button.setText(CONNECT)
         self.connect_button.setChecked(True)
         self.connection_label.setText("Not connected")
+        self.sync_label.setText("")
         if self.auto_connect:
             QTimer.singleShot(self.config.params.reconnect_time * 1000, self.handle_auto_connect_timer)
 

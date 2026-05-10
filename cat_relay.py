@@ -118,7 +118,7 @@ class CatRelay(QObject):
                         await self.sync(cat_client, sdr_client)
                         await asyncio.sleep(self.sync_interval)
         except Exception as e:
-            logger.error(f'Unexpected error during relay operation: {str(e)}')
+            logger.error(f'Relay terminated: {str(e)}')
             self.clients_disconnected.emit()
 
     def stop(self):
