@@ -29,6 +29,8 @@ def map_mode(mode, freq):
     return mode
 
 class N1MMProtocol(asyncio.DatagramProtocol):
+    N1MM_RECEIVE_PORT = 13064
+
     def __init__(self):
         super().__init__()
         self.transport: asyncio.DatagramTransport | None = None
@@ -84,7 +86,7 @@ class N1MMClient(Client):
         if not self._send_sock:
             logger.error('Send socket not created')
             return
-        await asyncio.to_thread(self._send_sock.sendto, b_msg, (self.send_ip, self.send_port))
+        await asyncio.to_thread(self._send_sock.sendto, b_msg, (self.send_ip, N1MMProtocol.N1MM_RECEIVE_PORT))
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._send_sock:

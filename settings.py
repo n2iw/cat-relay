@@ -102,7 +102,11 @@ class Settings(QDialog):
         logger.info('Received Cat software signal: %s', software)
         self.radio_info_widget.set_visibility(software == N1MM)
         if software == N1MM:
-            self.cat_port_widget.line.setText('2237')
+            self.cat_port_widget.setDisabled(True)
+            self.cat_port_widget.setToolTip(
+                'N1MM does not support changing the CAT port.'
+            )
+            self.cat_port_widget.line.setText('13064')
             self.radio_info_widget.line.setText('12060')
         elif software == FLRIG:
             self.cat_port_widget.line.setText('12345')
