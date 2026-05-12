@@ -1,7 +1,7 @@
 import logging
 import asyncio
 import xmlrpc.client
-from utils.client import CoreMode, Client
+from utils.client import CoreMode, Client, DataNotAvailableException
 from utils.mode_mapper import ModeMapper
 
 from radio_control.utils.transport import RequestsTransport
@@ -106,7 +106,7 @@ class FlrigClient(Client):
             raise Exception('Flrig is not connected')
         raw = await asyncio.to_thread(self._flrig.rig.get_vfo)
         if raw is None:
-            raise Exception('Failed to get frequency from Flrig')
+            raise DataNotAvailableException('Failed to get frequency from Flrig')
         freq = _int_from_xmlrpc(raw)
         return freq
 
@@ -115,6 +115,6 @@ class FlrigClient(Client):
             raise Exception('Flrig is not connected')
         raw = await asyncio.to_thread(self._flrig.rig.get_mode)
         if raw is None:
-            raise Exception('Failed to get mode from Flrig')
+            raise DataNotAvailableException('Failed to get mode from Flrig')
         native_mode = str(raw)
         return self._mapper.get_core_mode(native_mode)

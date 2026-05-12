@@ -1,6 +1,6 @@
 import re
 import logging
-from utils.client import CoreMode
+from utils.client import CoreMode, DataNotAvailableException
 from utils.mode_mapper import ModeMapper
 from utils.tcp_client import TCPClient
 from utils.client import Client
@@ -80,7 +80,7 @@ class Commander(Client):
         await self._tcp.send(cmd)
         freq = parse_frequency(await self._tcp.receive())
         if freq is None:
-            raise Exception('Failed to get frequency from DXLab')
+            raise DataNotAvailableException('Failed to get frequency from DXLab')
         return freq
 
     async def get_mode(self) -> CoreMode:
@@ -90,7 +90,7 @@ class Commander(Client):
         await self._tcp.send(cmd)
         mode = parse_mode(await self._tcp.receive())
         if mode is None:
-            raise Exception('Failed to get mode from DXLab')
+            raise DataNotAvailableException('Failed to get mode from DXLab')
         return self._mapper.get_core_mode(mode)
 
     async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:

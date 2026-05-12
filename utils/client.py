@@ -13,7 +13,11 @@ class CoreMode(Enum):
     USB = 'USB'
     LSB = 'LSB'
     CW = 'CW'
-    NOT_SUPPORTED = 'NOT_SUPPORTED'
+    NOT_SUPPORTED = 'NOT_SUPPORTED' # This mode should be used when a native mode is not compatible with any other core modes
+
+class DataNotAvailableException(Exception):
+    # This exception should be raised when frequency or mode is temporarily unavailable
+    pass
 
 @runtime_checkable
 class Client(Protocol):

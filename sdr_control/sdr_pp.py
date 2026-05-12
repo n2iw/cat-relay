@@ -8,7 +8,7 @@
 
 import logging
 import re
-from utils.client import CoreMode
+from utils.client import CoreMode, DataNotAvailableException
 from utils.mode_mapper import ModeMapper
 from utils.tcp_client import TCPClient
 from utils.client import Client
@@ -140,7 +140,7 @@ class SdrPPClient(Client):
         await self._tcp.send(message)
         freq = parse_frequency(await self._tcp.receive())
         if freq is None:
-            raise Exception('Failed to get frequency from SDR++')
+            raise DataNotAvailableException('Failed to get frequency from SDR++')
         return freq
 
     async def get_mode(self) -> CoreMode:
@@ -150,5 +150,5 @@ class SdrPPClient(Client):
         await self._tcp.send(message)
         mode = parse_mode(await self._tcp.receive())
         if mode is None:
-            raise Exception('Failed to get mode from SDR++')
+            raise DataNotAvailableException('Failed to get mode from SDR++')
         return self._mapper.get_core_mode(mode)

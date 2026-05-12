@@ -5,7 +5,7 @@ import json
 
 from websockets.asyncio.client import connect, ClientConnection
 
-from utils.client import CoreMode, Client
+from utils.client import CoreMode, Client, DataNotAvailableException
 from utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
@@ -121,14 +121,14 @@ class SdrConnectClient(Client):
         if not self._ws:
             raise ConnectionResetError('SDR Connect is disconnected')
         if not self._last_freq:
-            raise Exception('SDR Connect Frequency not available')
+            raise DataNotAvailableException('SDR Connect Frequency not available')
         return self._last_freq
 
     async def get_mode(self) -> CoreMode:
         if not self._ws:
             raise ConnectionResetError('SDR Connect is disconnected')
         if not self._last_mode:
-            raise Exception('SDR Connect Mode not available')
+            raise DataNotAvailableException('SDR Connect Mode not available')
         return self._mapper.get_core_mode(self._last_mode)
 
     async def _query_device_frequency(self) -> int | None:

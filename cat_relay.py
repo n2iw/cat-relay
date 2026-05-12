@@ -5,8 +5,6 @@ import sys
 import time
 import asyncio
 from PySide6.QtCore import QObject, Signal
-from requests.exceptions import ConnectionError
-from websockets.exceptions import ConnectionClosedOK
 
 from utils.log_config import setup_logging
 
@@ -15,7 +13,7 @@ from sdr_control.sdr_pp import SdrPPClient
 from radio_control.dxlab import Commander
 from radio_control.n1mm import N1MMClient
 from radio_control.flrig import FlrigClient
-from utils.client import Client, CoreMode
+from utils.client import Client, CoreMode, DataNotAvailableException
 from enum import Enum
 
 from config import Config, DXLAB, N1MM, FLRIG, RUMLOG, NETWORK, LOCAL_HOST, SDR_CONNECT, SDR_PP
@@ -200,10 +198,7 @@ class CatRelay(QObject):
                     self.sync_finished.emit(sync_result(True, 'SDR', 'radio', sdr_freq, sdr_mode.value))
                     return True
             return False
-        except (ConnectionResetError, BrokenPipeError, ConnectionError, ConnectionClosedOK) as e:
-            logger.error(f'Client disconnected while syncing')
-            raise e
-        except Exception as e:
+        except DataNotAvailableException as e:
             logger.error(f'Sync failed: {str(e)}')
             return False
 

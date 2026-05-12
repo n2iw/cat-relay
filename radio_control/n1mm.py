@@ -3,7 +3,7 @@ import socket
 import asyncio
 
 from radio_control.utils.radio_info import get_radio_info, set_frequency_message
-from utils.client import CoreMode, Client
+from utils.client import CoreMode, Client, DataNotAvailableException
 from utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ class N1MMClient(Client):
             raise Exception('N1MM not connected')
         freq = self.n1mm.get_freq()
         if not freq:
-            raise Exception('N1MM Frequency not available')
+            raise DataNotAvailableException('N1MM Frequency not available')
         return self.n1mm.get_freq()
 
     async def get_mode(self) -> CoreMode:
@@ -110,7 +110,7 @@ class N1MMClient(Client):
 
         mode = self.n1mm.get_mode()
         if not mode:
-            raise Exception('N1MM Mode not available')
+            raise DataNotAvailableException('N1MM Mode not available')
         return self._mapper.get_core_mode(mode)
 
     # Only set frequency, setting mode is not supported in N1MM
