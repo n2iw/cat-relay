@@ -64,8 +64,8 @@ Make sure "CAT Port" matches the port number in your radio control software.
 
 #### N1MM+
 
-If you use N1MM+, make sure "Radio Info Port" matches the "radio" port in N1MM+'s "Broadcast Data" configuration page.
-For example, if the "Radio" box has "127.0.0.1:12060", put "12060" in Cat-Relay's "Radio Info Port" box.
+If you use N1MM+, make sure "CAT Port" matches the "radio" port in N1MM+'s "Broadcast Data" configuration page.
+For example, if the "Radio" box has "127.0.0.1:12060", put "12060" in Cat-Relay's "CAT Port" box.
 
 On N1MM+ side, make sure the ip address in the "Radio" box matches the computer that runs Cat-Relay. If Cat-Relay runs 
 on the same computer as N1MM+, it should be 127.0.0.1.

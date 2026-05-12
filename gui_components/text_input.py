@@ -13,8 +13,8 @@ class TextInput(QWidget):
         self.data_type = data_type
 
         layout = QHBoxLayout()
-        message = QLabel(f'{label}: ')
-        layout.addWidget(message)
+        self.label = QLabel(f'{label}: ')
+        layout.addWidget(self.label)
 
         self.line = QLineEdit(str(value))
         self.line.textChanged.connect(self.text_changed)

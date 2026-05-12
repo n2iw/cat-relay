@@ -57,10 +57,9 @@ class N1MMProtocol(asyncio.DatagramProtocol):
         return self._last_mode
 
 class N1MMClient(Client):
-    def __init__(self, listen_port, send_ip, send_port):
+    def __init__(self, ip, listen_port):
         self.listen_port = listen_port
-        self.send_ip = send_ip
-        self.send_port = send_port
+        self._ip = ip
         self._send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.terminated = False # flag to terminate the thread
         self.thread = None
@@ -93,7 +92,7 @@ class N1MMClient(Client):
         if not self._send_sock:
             logger.error('Send socket not created')
             return
-        await asyncio.to_thread(self._send_sock.sendto, b_msg, (self.send_ip, N1MMProtocol.N1MM_RECEIVE_PORT))
+        await asyncio.to_thread(self._send_sock.sendto, b_msg, (self._ip, N1MMProtocol.N1MM_RECEIVE_PORT))
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._send_sock:

@@ -3,11 +3,11 @@ import logging
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QLineEdit
 
-from client_registry import client_registry, DEFAULT_PORT, DEFAULT_RADIO_INFO_PORT
+from client_registry import client_registry, DEFAULT_PORT
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
-from config import VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, VALID_SDRS, SDR_PP, SDR_CONNECT, N1MM, FLRIG, DXLAB, RUMLOG, VALID_LOCATIONS, LOCAL, NETWORK
+from config import VALID_CAT_SOFTWARE, PLACEHOLDER_SOFTWARE, VALID_SDRS, VALID_LOCATIONS, LOCAL, NETWORK
 from utils.log_config import LOG_DIR
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,6 @@ class Settings(QDialog):
 
         # Set up UI
         self.parent_window = parent
-        self.radio_info_widget = TextInput('Radio Info Port', self.params.radio_info_port, lambda port: self.params.set_radio_info_port(port), self.params.cat_software == N1MM, INTEGER)
         self.sdr_ip_widget = TextInput("SDR IP", self.params.sdr_ip, lambda ip: self.params.set_sdr_ip(ip), self.params.sdr_location == NETWORK)
         self.sdr_port_widget = TextInput('SDR Port', self.params.sdr_port, lambda port: self.params.set_sdr_port(port), True, INTEGER)
         self.cat_ip_widget = TextInput('CAT IP', self.params.cat_ip, lambda ip: self.params.set_cat_ip(ip), self.params.cat_location == NETWORK)
@@ -41,7 +40,7 @@ class Settings(QDialog):
         layout = QVBoxLayout()
 
         # SDR type
-        layout.addWidget(Dropdown('SDR Software', self.params.sdr_software, VALID_SDRS, SDR_PP, lambda software: self.params.set_sdr_software(software)))
+        layout.addWidget(Dropdown('SDR Software', self.params.sdr_software, VALID_SDRS, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_sdr_software(software)))
 
         # SDR Location
         layout.addWidget(Dropdown("SDR running on", self.params.sdr_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_sdr_location(location)))
@@ -51,17 +50,13 @@ class Settings(QDialog):
         layout.addWidget(self.sdr_port_widget)
 
         # CAT Software
-        layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_cat_software(software)))
-        self.update_cat_widgets(self.params.cat_software)
+        layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARE, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_cat_software(software)))
         # CAT Location
         layout.addWidget(Dropdown("CAT running on", self.params.cat_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_cat_location(location)))
         # CAT IP
         layout.addWidget(self.cat_ip_widget)
         # CAT Port
         layout.addWidget(self.cat_port_widget)
-
-        # Radio Info Port (only show when it's N1MM)
-        layout.addWidget(self.radio_info_widget)
 
         # Reconnect time
         layout.addWidget(WholeSecondsInput('Reconnect Time', self.params.reconnect_time, 3, 60, 1, lambda time: self.params.set_reconnect_time(time)))
@@ -98,22 +93,12 @@ class Settings(QDialog):
         if default_port:
             self.sdr_port_widget.line.setText(default_port)
 
-    def update_cat_widgets(self, software: str):
-        self.radio_info_widget.set_visibility(software == N1MM)
-        self.cat_port_widget.set_visibility(software != N1MM)
-
     @Slot(str)
     def cat_software_changed(self, software: str):
         logger.info('Received Cat software signal: %s', software)
-        self.update_cat_widgets(software)
-
         default_port = client_registry[software].get(DEFAULT_PORT)
         if default_port:
             self.cat_port_widget.line.setText(client_registry[software][DEFAULT_PORT])
-
-        default_radio_info_port = client_registry[software].get(DEFAULT_RADIO_INFO_PORT)
-        if default_radio_info_port:
-            self.radio_info_widget.line.setText(default_radio_info_port)
 
     def accept(self):
         if self.parent_window and hasattr(self.parent_window, "update_params"):
