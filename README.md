@@ -17,8 +17,8 @@ Linux users can download the source code version. In some Linux systems, you mig
 Cat-relay was written in Python3 (3.13+) and can run on Mac, Windows and Linux.
 Ready to use executable files are available for Mac and Windows platforms.
 
-Currently, Cat-Relay mainly supports one SDR software - SDR++ (cross-platform). However, Cat-Relay may work with other SDR software if they provide a
-Hamlib/Rigctl compatible TCP server.
+Currently, Cat-Relay supports two SDR software - SDR++ and SDRconnect (SDR Play), both are cross-platform. However, 
+Cat-Relay may also work with other SDR software if they provide a Hamlib/Rigctl compatible TCP server.
 
 Cat-Relay supports following radio control software:
 
@@ -32,7 +32,7 @@ Cat-Relay may also work with other radio control software if they provide one of
 - A DXLab Commander compatible TCP interface.
 - A Flrig compatible XML/RPC server.
 
-At this moment, only SDR++, RUMlogNG, DXLab Commander, Flrig and N1MM+ are
+At this moment, only SDR++, SDRconnect, RUMlogNG, DXLab Commander, Flrig and N1MM+ are
 tested. MacLoggerDX may also work, except changing modes on SDR is not supported by MacLoggerDX.
 
 ## Settings
@@ -45,7 +45,7 @@ Most settings are self-explanatory. Here are some useful tips:
 
 ### 1. Match the ports
 
-Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel.
+Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel. Port number for SDRconnect is not configurable, please leave it as 5454. 
 ![SDR++ settings](resources/SDR++-settings.png "SDR++ settings")
 
 Make sure "CAT Port" matches the port number in your radio control software.

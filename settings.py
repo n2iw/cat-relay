@@ -3,7 +3,7 @@ import logging
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QLineEdit
 
-from client_registry import client_registry, DEFAULT_PORT
+from client_registry import client_registry, DEFAULT_PORT, FIXED_PORT
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
@@ -41,6 +41,7 @@ class Settings(QDialog):
 
         # SDR type
         layout.addWidget(Dropdown('SDR Software', self.params.sdr_software, VALID_SDRS, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_sdr_software(software)))
+        self.adjust_sdr_port(self.params.sdr_software)
 
         # SDR Location
         layout.addWidget(Dropdown("SDR running on", self.params.sdr_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_sdr_location(location)))
@@ -86,9 +87,14 @@ class Settings(QDialog):
         logger.info('Received CAT Location signal: %s', location)
         self.cat_ip_widget.set_visibility(location == NETWORK)
 
+    def adjust_sdr_port(self, software: str):
+        fixed_port = client_registry[software].get(FIXED_PORT, False)
+        self.sdr_port_widget.setDisabled(fixed_port)
+
     @Slot(str)
     def sdr_software_changed(self, software):
         logger.info('Received SDR software signal: %s', software)
+        self.adjust_sdr_port(software)
         default_port = client_registry[software].get(DEFAULT_PORT)
         if default_port:
             self.sdr_port_widget.line.setText(default_port)

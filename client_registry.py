@@ -7,10 +7,12 @@ from sdr_control.sdr_pp import SdrPPClient
 
 DEFAULT_PORT = 'default_port'
 CLIENT_CLASS = 'client_class'
+FIXED_PORT = 'fixed_port'
 
 client_registry = {
     SDR_CONNECT: {
         DEFAULT_PORT: '5454',
+        FIXED_PORT: True,
         CLIENT_CLASS: SdrConnectClient
     },
     SDR_PP: {
