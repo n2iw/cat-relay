@@ -30,6 +30,7 @@ def map_mode(mode, freq):
 
 class N1MMProtocol(asyncio.DatagramProtocol):
     N1MM_RECEIVE_PORT = 13064
+    N1MM_TIMEOUT = 10
 
     def __init__(self):
         super().__init__()
@@ -76,7 +77,13 @@ class N1MMClient(Client):
             )
             if not self._listen_transport or not self.n1mm:
                 raise Exception('Fail to create N1MM radio info endpoint')
+            loop.call_later(self.n1mm.N1MM_TIMEOUT, self.make_sure_connected)
         return self
+
+    def make_sure_connected(self):
+        if not self.n1mm or not self.n1mm.get_freq():
+            logger.error('Never received data from N1MM')
+            self.n1mm = None
 
     async def send(self, message):
         if isinstance(message, str):
