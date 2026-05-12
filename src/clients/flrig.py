@@ -1,10 +1,10 @@
 import logging
 import asyncio
 import xmlrpc.client
-from utils.client import CoreMode, Client, DataNotAvailableException
-from utils.mode_mapper import ModeMapper
+from clients.utils.client_protocol import CoreMode, Client, DataNotAvailableException
+from clients.utils.mode_mapper import ModeMapper
 
-from radio_control.utils.transport import RequestsTransport
+from clients.utils.requests_transport import RequestsTransport
 
 logger = logging.getLogger(__name__)
 

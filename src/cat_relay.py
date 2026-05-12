@@ -9,7 +9,7 @@ from PySide6.QtCore import QObject, Signal
 from client_registry import client_registry, CLIENT_CLASS
 from utils.log_config import setup_logging
 
-from utils.client import Client, CoreMode, DataNotAvailableException
+from clients.utils.client_protocol import Client, CoreMode, DataNotAvailableException
 from enum import Enum
 
 from config import Config, NETWORK, LOCAL_HOST

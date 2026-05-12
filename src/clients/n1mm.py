@@ -2,9 +2,9 @@ import logging
 import socket
 import asyncio
 
-from radio_control.utils.radio_info import get_radio_info, set_frequency_message
-from utils.client import CoreMode, Client, DataNotAvailableException
-from utils.mode_mapper import ModeMapper
+from clients.utils.n1mm_radio_info import get_radio_info, set_frequency_message
+from clients.utils.client_protocol import CoreMode, Client, DataNotAvailableException
+from clients.utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
 

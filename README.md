@@ -101,7 +101,7 @@ If you are using Linux or you prefer running source code, here are some steps yo
 
 The easiest way to run Cat-Relay is using [uv](https://docs.astral.sh/uv/). After installing uv, open a terminal, go to the folder that contains Cat-Relay and runn following command:
 
-`uv run app.py`
+`uv run src/app.py`
 
 ### If you only use pip
 
@@ -115,6 +115,6 @@ To install dependencies (you only need to do this once), open a terminal, go to 
 
 Open a terminal, go to the folder that contains Cat-Relay, and run following command:
 
-`python3 app.py`
+`python3 src/app.py`
 
 Don't close the terminal window, you can minimize it if you'd like to.

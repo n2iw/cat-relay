@@ -1,6 +1,6 @@
 import logging
 
-from utils.client import CoreMode
+from clients.utils.client_protocol import CoreMode
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
-from config import SDR_CONNECT, SDR_PP, N1MM, DXLAB, RUMLOG, FLRIG
-from radio_control.dxlab import Commander
-from radio_control.flrig import FlrigClient
-from radio_control.n1mm import N1MMClient
-from sdr_control.sdr_connect import SdrConnectClient
-from sdr_control.sdr_pp import SdrPPClient
+from config import SDR_CONNECT, SDR_PP, N1MM, DXLAB, RUMLOG, FLRIG, HAMLIB
+from clients.dxlab import Commander
+from clients.flrig import FlrigClient
+from clients.n1mm import N1MMClient
+from clients.sdr_connect import SdrConnectClient
+from clients.sdr_pp import SdrPPClient
 
 DEFAULT_PORT = 'default_port'
 CLIENT_CLASS = 'client_class'
@@ -34,5 +34,9 @@ client_registry = {
     FLRIG: {
         DEFAULT_PORT: '12345',
         CLIENT_CLASS: FlrigClient
+    },
+    HAMLIB: {
+        DEFAULT_PORT: '4532',
+        CLIENT_CLASS: SdrPPClient
     }
 }

@@ -5,8 +5,8 @@ import json
 
 from websockets.asyncio.client import connect, ClientConnection
 
-from utils.client import CoreMode, Client, DataNotAvailableException
-from utils.mode_mapper import ModeMapper
+from clients.utils.client_protocol import CoreMode, Client, DataNotAvailableException
+from clients.utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
 

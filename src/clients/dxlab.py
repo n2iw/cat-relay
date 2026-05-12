@@ -1,9 +1,9 @@
 import re
 import logging
-from utils.client import CoreMode, DataNotAvailableException
-from utils.mode_mapper import ModeMapper
-from utils.tcp_client import TCPClient
-from utils.client import Client
+from clients.utils.client_protocol import CoreMode, DataNotAvailableException
+from clients.utils.mode_mapper import ModeMapper
+from clients.utils.tcp_client import TCPClient
+from clients.utils.client_protocol import Client
 
 logger = logging.getLogger(__name__)
 

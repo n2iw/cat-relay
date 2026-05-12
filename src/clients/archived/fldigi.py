@@ -1,7 +1,7 @@
 # This module is not used anymore, but keeping it here for reference.
 
 import pyfldigi
-from utils.tcp_client import TCPClient
+from clients.utils.tcp_client import TCPClient
 
 VALID_MODES = [
  'LSB',
