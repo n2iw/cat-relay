@@ -3,6 +3,7 @@ import logging
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QLineEdit
 
+from client_registry import client_registry, DEFAULT_PORT, DEFAULT_RADIO_INFO_PORT
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
@@ -51,6 +52,7 @@ class Settings(QDialog):
 
         # CAT Software
         layout.addWidget(Dropdown('Radio Control(CAT) Software', self.params.cat_software, VALID_CAT_SOFTWARES, PLACEHOLDER_SOFTWARE, lambda software: self.params.set_cat_software(software)))
+        self.update_cat_widgets(self.params.cat_software)
         # CAT Location
         layout.addWidget(Dropdown("CAT running on", self.params.cat_location, VALID_LOCATIONS, LOCAL, lambda location: self.params.set_cat_location(location)))
         # CAT IP
@@ -92,28 +94,26 @@ class Settings(QDialog):
     @Slot(str)
     def sdr_software_changed(self, software):
         logger.info('Received SDR software signal: %s', software)
-        if software == SDR_PP:
-            self.sdr_port_widget.line.setText('4532')
-        elif software == SDR_CONNECT:
-            self.sdr_port_widget.line.setText('5454')
+        default_port = client_registry[software].get(DEFAULT_PORT)
+        if default_port:
+            self.sdr_port_widget.line.setText(default_port)
+
+    def update_cat_widgets(self, software: str):
+        self.radio_info_widget.set_visibility(software == N1MM)
+        self.cat_port_widget.set_visibility(software != N1MM)
 
     @Slot(str)
-    def cat_software_changed(self, software):
+    def cat_software_changed(self, software: str):
         logger.info('Received Cat software signal: %s', software)
-        self.radio_info_widget.set_visibility(software == N1MM)
-        if software == N1MM:
-            self.cat_port_widget.setDisabled(True)
-            self.cat_port_widget.setToolTip(
-                'N1MM does not support changing the CAT port.'
-            )
-            self.cat_port_widget.line.setText('13064')
-            self.radio_info_widget.line.setText('12060')
-        elif software == FLRIG:
-            self.cat_port_widget.line.setText('12345')
-        elif software == DXLAB:
-            self.cat_port_widget.line.setText('52002')
-        elif software == RUMLOG:
-            self.cat_port_widget.line.setText('5555')
+        self.update_cat_widgets(software)
+
+        default_port = client_registry[software].get(DEFAULT_PORT)
+        if default_port:
+            self.cat_port_widget.line.setText(client_registry[software][DEFAULT_PORT])
+
+        default_radio_info_port = client_registry[software].get(DEFAULT_RADIO_INFO_PORT)
+        if default_radio_info_port:
+            self.radio_info_widget.line.setText(default_radio_info_port)
 
     def accept(self):
         if self.parent_window and hasattr(self.parent_window, "update_params"):
