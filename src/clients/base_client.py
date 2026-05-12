@@ -1,5 +1,5 @@
 # This module defines the Client protocol that all CatRelay client modules must implement
-from typing import Protocol, runtime_checkable
+from abc import abstractmethod, ABC
 from enum import Enum
 
 class CoreMode(Enum):
@@ -19,34 +19,38 @@ class DataNotAvailableException(Exception):
     # This exception should be raised when frequency or mode is temporarily unavailable
     pass
 
-@runtime_checkable
-class Client(Protocol):
+class BaseClient(ABC):
+    @abstractmethod
+    def __init__(self, ip: str, port: int, name: str) -> None:
+        ...
 
+    @abstractmethod
     async def __aenter__(self) -> 'Client':
         """
         Open the client and connect your device here.
         """
         ...
 
+    @abstractmethod
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """
         Close the client and disconnect your device here.
         """
         ...
-    
+    @abstractmethod
     async def get_freq(self) -> int:
         """
         Get the current frequency from the device.
         """
         ...
-    
+    @abstractmethod
     async def get_mode(self) -> CoreMode:
         """
         Get the current mode from the device.
         Should only return the core mode, not the native mode
         """
         ...
-    
+    @abstractmethod
     async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         """
         Set the frequency and mode on the device.

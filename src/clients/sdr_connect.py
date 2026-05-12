@@ -5,7 +5,7 @@ import json
 
 from websockets.asyncio.client import connect, ClientConnection
 
-from clients.utils.client_protocol import CoreMode, Client, DataNotAvailableException
+from clients.base_client import CoreMode, DataNotAvailableException, BaseClient
 from clients.utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def get_mode_message() -> str:
 def set_mode_message(mode: str) -> str:
     return sdr_connect_message('set_property', MODE_PROPERTY, mode)
 
-class SdrConnectClient(Client):
+class SdrConnectClient(BaseClient):
 
     NATIVE_TO_CORE_MODES = {
         'WFM': CoreMode.FM,  # WFM mode from SDR Connect will be converted to WFM mode
@@ -47,11 +47,12 @@ class SdrConnectClient(Client):
         CoreMode.FM: 'NFM'
     }
 
-    def __init__(self, ip, port):
-        self._last_mode: str | None = None
-        self._last_freq: int | None = None
+    def __init__(self, ip: str, port: int, name: str = 'SDRconnect',):
         self._ip = ip
         self._port = port
+        self.name = name
+        self._last_mode: str | None = None
+        self._last_freq: int | None = None
         self._ws: ClientConnection | None = None
         self._listen_task = None
 
@@ -60,7 +61,7 @@ class SdrConnectClient(Client):
     async def __aenter__(self) -> 'SdrConnectClient':
         self._ws = await connect(f'ws://{self._ip}:{self._port}')
         if not self._ws:
-            raise Exception('Fail to connect to SDR Connect')
+            raise Exception(f'Fail to connect to {self.name}')
 
         await self._query_device_frequency()
         await self._query_device_mode()
@@ -80,9 +81,9 @@ class SdrConnectClient(Client):
     # This function will be running in a separate thread and updates self._last_mode and self._last_freq
     async def listen(self):
         if not self._ws:
-            logger.error('SDR Connect is not connected')
+            logger.error(f'{self.name} is not connected')
             return
-        logger.info('listening from SdrConnect')
+        logger.info(f'listening for {self.name}')
         try:
             async for message in self._ws:
                 if self._listen_task is None:
@@ -95,7 +96,7 @@ class SdrConnectClient(Client):
                         native_mode = response['value']
                         self._last_mode = native_mode
 
-            logger.info('SDR Connect disconnected')
+            logger.info(f'{self.name} disconnected')
             self._ws = None
         except Exception as e:
             logger.error(e)
@@ -104,7 +105,7 @@ class SdrConnectClient(Client):
 
     async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._ws:
-            raise ConnectionResetError('SDR Connect is disconnected')
+            raise ConnectionResetError(f'{self.name} is disconnected')
 
         command = set_frequency_message(freq)
         await self._ws.send(command)
@@ -119,16 +120,16 @@ class SdrConnectClient(Client):
 
     async def get_freq(self) -> int:
         if not self._ws:
-            raise ConnectionResetError('SDR Connect is disconnected')
+            raise ConnectionResetError(f'{self.name} is disconnected')
         if not self._last_freq:
-            raise DataNotAvailableException('SDR Connect Frequency not available')
+            raise DataNotAvailableException(f'{self.name} Frequency not available')
         return self._last_freq
 
     async def get_mode(self) -> CoreMode:
         if not self._ws:
-            raise ConnectionResetError('SDR Connect is disconnected')
+            raise ConnectionResetError(f'{self.name} is disconnected')
         if not self._last_mode:
-            raise DataNotAvailableException('SDR Connect Mode not available')
+            raise DataNotAvailableException(f'{self.name} Mode not available')
         return self._mapper.get_core_mode(self._last_mode)
 
     async def _query_device_frequency(self) -> int | None:
@@ -146,7 +147,7 @@ class SdrConnectClient(Client):
     async def _query_device_property(self, prop: str) -> str | None:
         logger.info(f'querying device property: {prop}')
         if not self._ws:
-            logger.error('SDR Connect is not connected')
+            logger.error(f'{self.name} is not connected')
             return None
         if prop == FREQUENCY_PROPERTY:
             command = get_frequency_message()

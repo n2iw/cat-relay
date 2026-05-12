@@ -6,10 +6,10 @@ import time
 import asyncio
 from PySide6.QtCore import QObject, Signal
 
-from client_registry import client_registry, CLIENT_CLASS
+from clients.client_registry import client_registry
 from utils.log_config import setup_logging
 
-from clients.utils.client_protocol import Client, CoreMode, DataNotAvailableException
+from clients.base_client import BaseClient, CoreMode, DataNotAvailableException
 from enum import Enum
 
 from config import Config, NETWORK, LOCAL_HOST
@@ -118,21 +118,21 @@ class CatRelay(QObject):
     def stop(self):
         self._terminate_clients = True
 
-    def _create_sdr_client(self) -> Client:
+    def _create_sdr_client(self) -> BaseClient:
         ip_address = self.sdr_ip if self.sdr_location == NETWORK else LOCAL_HOST
         logger.info('Connecting to %s at %s:%s', self.sdr_software, ip_address, self.sdr_port)
         if self.sdr_software in client_registry:
-            return client_registry[self.sdr_software][CLIENT_CLASS](ip_address, self.sdr_port)
+            return client_registry[self.sdr_software].create_client(ip_address, self.sdr_port)
         else:
             message = f'SDR software "{self.sdr_software}" is not supported!'
             logger.error(message)
             raise Exception(message)
 
-    def _create_cat_client(self) -> Client:
+    def _create_cat_client(self) -> BaseClient:
         ip_address = self.cat_ip if self.cat_location == NETWORK else LOCAL_HOST
         if self.cat_software in client_registry:
             logger.info('Connecting to %s at %s:%s', self.cat_software, ip_address, self.cat_port)
-            return client_registry[self.cat_software][CLIENT_CLASS](ip_address, self.cat_port)
+            return client_registry[self.cat_software].create_client(ip_address, self.cat_port)
         else:
             message = f'Cat software "{self.cat_software}" is not supported!'
             logger.error(message)
@@ -161,7 +161,7 @@ class CatRelay(QObject):
         else:
             return mode
 
-    async def sync(self, cat_client: Client, sdr_client: Client) -> bool:
+    async def sync(self, cat_client: BaseClient, sdr_client: BaseClient) -> bool:
         try:
             if not cat_client or not sdr_client:
                 logger.error('Cat or SDR client not connected')

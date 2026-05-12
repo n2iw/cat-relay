@@ -3,7 +3,7 @@ import socket
 import asyncio
 
 from clients.utils.n1mm_radio_info import get_radio_info, set_frequency_message
-from clients.utils.client_protocol import CoreMode, Client, DataNotAvailableException
+from clients.base_client import CoreMode, DataNotAvailableException, BaseClient
 from clients.utils.mode_mapper import ModeMapper
 
 logger = logging.getLogger(__name__)
@@ -56,10 +56,11 @@ class N1MMProtocol(asyncio.DatagramProtocol):
     def get_mode(self) -> str:
         return self._last_mode
 
-class N1MMClient(Client):
-    def __init__(self, ip, listen_port):
-        self.listen_port = listen_port
+class N1MMClient(BaseClient):
+    def __init__(self, ip: str, port: int, name: str = 'N1MM+') -> None:
         self._ip = ip
+        self.listen_port = port
+        self.name = name
         self._send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.terminated = False # flag to terminate the thread
         self.thread = None
@@ -75,13 +76,13 @@ class N1MMClient(Client):
                 local_addr=('0.0.0.0', self.listen_port)
             )
             if not self._listen_transport or not self.n1mm:
-                raise Exception('Fail to create N1MM radio info endpoint')
+                raise Exception(f'Fail to create {self.name} radio info endpoint')
             loop.call_later(self.n1mm.N1MM_TIMEOUT, self.make_sure_connected)
         return self
 
     def make_sure_connected(self):
         if not self.n1mm or not self.n1mm.get_freq():
-            logger.error('Never received data from N1MM')
+            logger.error(f'Never received data from {self.name}')
             self.n1mm = None
 
     async def send(self, message):
@@ -90,7 +91,7 @@ class N1MMClient(Client):
         else:
             b_msg = message
         if not self._send_sock:
-            logger.error('Send socket not created')
+            logger.error(f'{self.name} send socket not created')
             return
         await asyncio.to_thread(self._send_sock.sendto, b_msg, (self._ip, N1MMProtocol.N1MM_RECEIVE_PORT))
 
@@ -104,19 +105,19 @@ class N1MMClient(Client):
 
     async def get_freq(self) -> int:
         if not self.n1mm:
-            raise Exception('N1MM not connected')
+            raise Exception(f'{self.name} not connected')
         freq = self.n1mm.get_freq()
         if not freq:
-            raise DataNotAvailableException('N1MM Frequency not available')
+            raise DataNotAvailableException(f'{self.name} Frequency not available')
         return self.n1mm.get_freq()
 
     async def get_mode(self) -> CoreMode:
         if self.n1mm is None:
-            raise Exception('N1MM not connected')
+            raise Exception(f'{self.name} not connected')
 
         mode = self.n1mm.get_mode()
         if not mode:
-            raise DataNotAvailableException('N1MM Mode not available')
+            raise DataNotAvailableException(f'{self.name} Mode not available')
         return self._mapper.get_core_mode(mode)
 
     # Only set frequency, setting mode is not supported in N1MM

@@ -4,40 +4,39 @@ import yaml
 from PySide6.QtCore import QObject, Signal
 from pathlib import Path
 
-SDR_CONNECT = 'SDR Connect'
-SDR_PP = 'SDR++'
-VALID_SDRS = [SDR_CONNECT, SDR_PP]
+CONFIG_FILE = 'cat-relay.yml'
+
+# Labels
 SDR_SOFTWARE = 'SDR_SOFTWARE'
 SDR_LOCATION = 'SDR_LOCATION'
 SDR_IP = 'SDR_IP'
 SDR_PORT = 'SDR_PORT'
-
-
 CAT_LOCATION = 'CAT_LOCATION'
 CAT_IP = 'CAT_IP'
 CAT_PORT = 'CAT_PORT'
-
-RADIO_INFO_PORT = 'RADIO_INFO_PORT'
-
-RECONNECT_TIME = 'RECONNECT_TIME'  # seconds
-SYNC_INTERVAL = 'SYNC_TIME'  # seconds
-
 CAT_SOFTWARE = 'CAT_Software'
 PLACEHOLDER_SOFTWARE = '--select your software--'
-DXLAB = 'DXLab'
-RUMLOG = 'RUMLogNG'
-N1MM = 'N1MM'
-FLRIG = 'FLRIG'
-HAMLIB = 'HAMLIB'
-VALID_CAT_SOFTWARE = [DXLAB, RUMLOG, N1MM, FLRIG, HAMLIB]
-
-CONFIG_FILE = 'cat-relay.yml'
+RECONNECT_TIME = 'RECONNECT_TIME'  # seconds
+SYNC_INTERVAL = 'SYNC_TIME'  # seconds
 
 LOCAL = 'This computer'
 NETWORK = 'Another computer'
 VALID_LOCATIONS = [LOCAL, NETWORK]
-
 LOCAL_HOST = '127.0.0.1'
+
+# clients
+SDR_CONNECT = 'SDRconnect'
+SDR_PP = 'SDR++'
+DXLAB = 'DXLab'
+RUMLOG = 'RUMLogNG'
+N1MM = 'N1MM+'
+FLRIG = 'FLRIG'
+HAMLIB = 'HAMLIB'
+QLOG = 'QLog'
+
+VALID_SDRS = [SDR_CONNECT, SDR_PP]
+VALID_CAT_SOFTWARE = [DXLAB, RUMLOG, N1MM, FLRIG, QLOG]
+
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +139,7 @@ class Config:
         work_dir = os.getcwd()
         home_dir = Path.home()
         config_file_locations = [work_dir, home_dir, script_dir]
-        self.config_file_full_path = None
+        self.config_file_full_path: str | None = None
         self.default_config_file_full_path = os.path.join(home_dir, CONFIG_FILE)
         for location in config_file_locations:
             config_file_full_path = os.path.join(location, CONFIG_FILE)
@@ -152,8 +151,8 @@ class Config:
                         self.update_params_from(file_config)
                         self.config_file_full_path = config_file_full_path
                         break
-                except Exception:
-                    logger.exception('Failed to read config file %s', config_file_full_path)
+                except Exception as e:
+                    logger.exception(f'Failed to read config file {config_file_full_path}')
 
     def update_params_from(self, params_dict):
         self.params.sdr_software = params_dict.get(SDR_SOFTWARE, self.params.sdr_software)
@@ -164,7 +163,6 @@ class Config:
         self.params.cat_location = params_dict.get(CAT_LOCATION, self.params.cat_location)
         self.params.cat_ip = params_dict.get(CAT_IP, self.params.cat_ip)
         self.params.cat_port = params_dict.get(CAT_PORT, self.params.cat_port)
-        self.params.radio_info_port = params_dict.get(RADIO_INFO_PORT, self.params.radio_info_port)
         self.params.reconnect_time = params_dict.get(RECONNECT_TIME, self.params.reconnect_time)
         self.params.sync_interval = params_dict.get(SYNC_INTERVAL, self.params.sync_interval)
 
@@ -178,7 +176,6 @@ class Config:
             CAT_SOFTWARE: self.params.cat_software,
             CAT_IP: self.params.cat_ip,
             CAT_PORT: self.params.cat_port,
-            RADIO_INFO_PORT: self.params.radio_info_port,
             RECONNECT_TIME: self.params.reconnect_time,
             SYNC_INTERVAL: self.params.sync_interval
         }

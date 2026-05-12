@@ -1,9 +1,8 @@
 import re
 import logging
-from clients.utils.client_protocol import CoreMode, DataNotAvailableException
+from clients.base_client import CoreMode, DataNotAvailableException, BaseClient
 from clients.utils.mode_mapper import ModeMapper
 from clients.utils.tcp_client import TCPClient
-from clients.utils.client_protocol import Client
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ def format_freq(freq: int) -> str:
     # has to add leading 0s to make MacLogger DX work, DXlab and RUMlogNG don't need it
     return f'{freq/1000:>010,.3f}'
 
-class Commander(Client):
+class CommanderClient(BaseClient):
     NATIVE_TO_CORE_MODES = {
         'CW-R': CoreMode.CW,
         'DATA-L': CoreMode.LSB,
@@ -55,16 +54,17 @@ class Commander(Client):
     CORE_TO_NATIVE_MODES = {
     }
 
-    def __init__(self, ip, port):
+    def __init__(self, ip: str, port: int, name: str = 'DXLab') -> None:
         self._ip = ip
         self._port = port
+        self.name = name
         self._tcp: TCPClient | None = None
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
-    async def __aenter__(self) -> 'Commander':
+    async def __aenter__(self) -> 'CommanderClient':
         self._tcp = TCPClient(self._ip, self._port)
         if self._tcp is None:
-            raise Exception('Fail to connect to DXLab')
+            raise Exception(f'Fail to connect to {self.name}')
         await self._tcp.open()
         return self
 
@@ -75,27 +75,27 @@ class Commander(Client):
 
     async def get_freq(self) -> int:
         if not self._tcp:
-            raise Exception('DXLab is not connected')
+            raise Exception(f'{self.name} is not connected')
         cmd = format_command('command', 'CmdGetFreq') + format_command('parameters')
         await self._tcp.send(cmd)
         freq = parse_frequency(await self._tcp.receive())
         if freq is None:
-            raise DataNotAvailableException('Failed to get frequency from DXLab')
+            raise DataNotAvailableException(f'Failed to get frequency from {self.name}')
         return freq
 
     async def get_mode(self) -> CoreMode:
         if not self._tcp:
-            raise Exception('DXLab is not connected')
+            raise Exception(f'{self.name} is not connected')
         cmd = format_command('command', 'CmdSendMode') + format_command('parameters')
         await self._tcp.send(cmd)
         mode = parse_mode(await self._tcp.receive())
         if mode is None:
-            raise DataNotAvailableException('Failed to get mode from DXLab')
+            raise DataNotAvailableException(f'Failed to get mode from {self.name}')
         return self._mapper.get_core_mode(mode)
 
     async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
         if not self._tcp:
-            logger.error('DXLab is not connected')
+            logger.error(f'{self.name} is not connected')
             return
 
         if await self.get_mode() != mode:

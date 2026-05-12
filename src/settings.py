@@ -3,7 +3,7 @@ import logging
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QLineEdit
 
-from client_registry import client_registry, DEFAULT_PORT, FIXED_PORT
+from clients.client_registry import client_registry
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
@@ -88,23 +88,23 @@ class Settings(QDialog):
         self.cat_ip_widget.set_visibility(location == NETWORK)
 
     def adjust_sdr_port(self, software: str):
-        fixed_port = client_registry[software].get(FIXED_PORT, False)
+        fixed_port = client_registry[software].fixed_port
         self.sdr_port_widget.setDisabled(fixed_port)
 
     @Slot(str)
     def sdr_software_changed(self, software):
         logger.info('Received SDR software signal: %s', software)
         self.adjust_sdr_port(software)
-        default_port = client_registry[software].get(DEFAULT_PORT)
+        default_port = client_registry[software].default_port
         if default_port:
             self.sdr_port_widget.line.setText(default_port)
 
     @Slot(str)
     def cat_software_changed(self, software: str):
         logger.info('Received Cat software signal: %s', software)
-        default_port = client_registry[software].get(DEFAULT_PORT)
+        default_port = client_registry[software].default_port
         if default_port:
-            self.cat_port_widget.line.setText(client_registry[software][DEFAULT_PORT])
+            self.cat_port_widget.line.setText(client_registry[software].default_port)
 
     def accept(self):
         if self.parent_window and hasattr(self.parent_window, "update_params"):
