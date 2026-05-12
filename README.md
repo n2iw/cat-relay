@@ -45,7 +45,9 @@ Most settings are self-explanatory. Here are some useful tips:
 
 ### 1. Match the ports
 
-Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel. Port number for SDRconnect is not configurable, please leave it as 5454. 
+Make sure "SDR Port" matches the port number in SDR++'s "Rigctl Server" panel. Port number for SDRconnect is 
+fixed to 5454 and not configurable (limitation of SDRconnect) 
+
 ![SDR++ settings](resources/SDR++-settings.png "SDR++ settings")
 
 Make sure "CAT Port" matches the port number in your radio control software.
