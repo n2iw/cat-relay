@@ -47,12 +47,11 @@ class N1MMProtocol(asyncio.DatagramProtocol):
     def datagram_received(self, data, addr):
         if not data:
             logger.error('No data received')
+        self._received_data = True
         freq, mode = parse_frequency_mode(data.decode('utf-8'))
         if freq:
-            self._received_data = True
             self._last_freq = freq
         if mode:
-            self._received_data = True
             self._last_mode = mode
 
     async def detect_disconnection(self):
