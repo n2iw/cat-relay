@@ -47,7 +47,7 @@ jobs:
         env:
           ARCHFLAGS: "-arch arm64"
         run: |
-          pyinstaller app.py --name CatRelay --windowed --distpath dist/mac-arm
+          pyinstaller src/app.py --name CatRelay --windowed --distpath dist/mac-arm
       - name: Pack macOS app - Apple Silicon
         run: |
           cd dist/mac-arm
@@ -79,7 +79,7 @@ jobs:
           pip install pyinstaller
       - name: Build macOS App - Intel
         run: |
-          pyinstaller app.py --name CatRelay --windowed --distpath dist/mac-x64
+          pyinstaller src/app.py --name CatRelay --windowed --distpath dist/mac-x64
       - name: Pack macOS app - Intel
         run: |
           cd dist/mac-x64
@@ -111,7 +111,7 @@ jobs:
           pip install pyinstaller
       - name: Build Windows App
         run: |
-          pyinstaller app.py --name CatRelay --windowed --distpath dist/windows
+          pyinstaller src/app.py --name CatRelay --windowed --distpath dist/windows
       - name: Pack Windows App
         run: |
           cd dist/windows
