@@ -37,6 +37,9 @@ class N1MMProtocol(asyncio.DatagramProtocol):
         self.transport: asyncio.DatagramTransport | None = None
         self._last_mode = ''
         self._last_freq = 0
+        self._mode_updated = True
+        self._freq_updated = True
+        asyncio.create_task(self.detect_disconnection())
 
     def connection_made(self, transport):
         self.transport = transport
@@ -47,13 +50,25 @@ class N1MMProtocol(asyncio.DatagramProtocol):
         freq, mode = parse_frequency_mode(data.decode('utf-8'))
         if freq:
             self._last_freq = freq
+            self._freq_updated = True
         if mode:
             self._last_mode = mode
+            self._mode_updated = True
+
+    async def detect_disconnection(self):
+        while True:
+            await asyncio.sleep(self.N1MM_TIMEOUT)
+            self._mode_updated = False
+            self._freq_updated = False
 
     def get_freq(self) -> int:
+        if not self._freq_updated:
+            raise Exception('Receiving frequency from N1MM+ timed out!')
         return self._last_freq
 
     def get_mode(self) -> str:
+        if not self._mode_updated:
+            raise Exception('Receiving mode from N1MM+ timed out!')
         return self._last_mode
 
 class N1MMClient(BaseClient):
@@ -77,13 +92,7 @@ class N1MMClient(BaseClient):
             )
             if not self._listen_transport or not self.n1mm:
                 raise Exception(f'Fail to create {self.name} radio info endpoint')
-            loop.call_later(self.n1mm.N1MM_TIMEOUT, self.make_sure_connected)
         return self
-
-    def make_sure_connected(self):
-        if not self.n1mm or not self.n1mm.get_freq():
-            logger.error(f'Never received data from {self.name}')
-            self.n1mm = None
 
     async def send(self, message):
         if isinstance(message, str):
