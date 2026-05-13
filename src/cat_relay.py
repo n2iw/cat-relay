@@ -187,7 +187,7 @@ class CatRelay(QObject):
                     return True
             return False
         except DataNotAvailableException as e:
-            logger.error(f'Sync failed: {str(e)}')
+            logger.warning(f'Sync failed: {str(e)}')
             return False
 
 async def main():

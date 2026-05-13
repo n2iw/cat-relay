@@ -30,15 +30,15 @@ def map_mode(mode, freq):
 
 class N1MMProtocol(asyncio.DatagramProtocol):
     N1MM_RECEIVE_PORT = 13064
-    N1MM_TIMEOUT = 10
+    N1MM_TIMEOUT = 30
 
     def __init__(self):
         super().__init__()
         self.transport: asyncio.DatagramTransport | None = None
         self._last_mode = ''
         self._last_freq = 0
-        self._mode_updated = True
-        self._freq_updated = True
+        self._received_data = True
+        self._timed_out = False
         asyncio.create_task(self.detect_disconnection())
 
     def connection_made(self, transport):
@@ -49,26 +49,27 @@ class N1MMProtocol(asyncio.DatagramProtocol):
             logger.error('No data received')
         freq, mode = parse_frequency_mode(data.decode('utf-8'))
         if freq:
+            self._received_data = True
             self._last_freq = freq
-            self._freq_updated = True
         if mode:
+            self._received_data = True
             self._last_mode = mode
-            self._mode_updated = True
 
     async def detect_disconnection(self):
         while True:
+            self._received_data = False
             await asyncio.sleep(self.N1MM_TIMEOUT)
-            self._mode_updated = False
-            self._freq_updated = False
+            if not self._received_data:
+                self._timed_out = True
 
     def get_freq(self) -> int:
-        if not self._freq_updated:
-            raise Exception('Receiving frequency from N1MM+ timed out!')
+        if self._timed_out:
+            raise Exception('N1MM+ timed out!')
         return self._last_freq
 
     def get_mode(self) -> str:
-        if not self._mode_updated:
-            raise Exception('Receiving mode from N1MM+ timed out!')
+        if self._timed_out:
+            raise Exception('N1MM+ timed out!')
         return self._last_mode
 
 class N1MMClient(BaseClient):
