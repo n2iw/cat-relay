@@ -1,18 +1,22 @@
-name: Build and Attach Apps
+name: Build Nightly Release
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: nightly-release
+  cancel-in-progress: true
+
 jobs:
   build-zips:
     uses: ./.github/workflows/build-zips.yaml
 
-  attach-release-assets:
-    if: github.event_name == 'release'
+  publish-nightly-release:
     runs-on: ubuntu-latest
     needs: build-zips
     steps:
@@ -22,13 +26,18 @@ jobs:
           path: dist
           pattern: cat-relay-*
           merge-multiple: true
-      - name: Attach archives to release
+      - name: Recreate nightly release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.event.release.tag_name }}" \
+          gh release delete nightly --yes --cleanup-tag || true
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/nightly" || true
+          gh release create nightly \
             dist/cat-relay-src.zip \
             dist/cat-relay-mac-arm.zip \
             dist/cat-relay-mac-x64.zip \
             dist/cat-relay-win.zip \
-            --clobber
+            --target "${GITHUB_SHA}" \
+            --title "Nightly Build" \
+            --notes "Automated nightly build for ${GITHUB_SHA}" \
+            --prerelease
