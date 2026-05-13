@@ -17,8 +17,8 @@ Linux users can download the source code version. In some Linux systems, you mig
 Cat-relay was written in Python3 (3.13+) and can run on Mac, Windows and Linux.
 Ready to use executable files are available for Mac and Windows platforms.
 
-Currently, Cat-Relay supports two SDR software - SDR++ and SDRconnect (SDR Play), both are cross-platform. However, 
-Cat-Relay may also work with other SDR software if they provide a Hamlib/Rigctl compatible TCP server.
+Currently, Cat-Relay supports two SDR software - SDR++ and SDRconnect (SDR Play), both are cross-platform.  
+Cat-Relay may also work with other SDR software if it provide a Hamlib/Rigctl compatible TCP server. Choose 'SDR++' in that case.
 
 Cat-Relay supports following radio control software:
 
@@ -26,13 +26,15 @@ Cat-Relay supports following radio control software:
 - Flrig (cross platform)
 - DXLab Commander (Windows)
 - N1MM+ (Windows)
+- QLog (cross platform)
 
-Cat-Relay may also work with other radio control software if they provide one of two interfaces:
+Cat-Relay may also work with other radio control software if they provide one of 3 interfaces:
 
-- A DXLab Commander compatible TCP interface.
-- A Flrig compatible XML/RPC server.
+- DXLab Commander compatible TCP interface.
+- Flrig compatible XML/RPC server.
+- Hamlib/rigctld compatible TCP interface. Choose QLog in that case.
 
-At this moment, only SDR++, SDRconnect, RUMlogNG, DXLab Commander, Flrig and N1MM+ are
+At this moment, only SDR++, SDRconnect, RUMlogNG, DXLab Commander, Flrig, N1MM+ and QLog are
 tested. MacLoggerDX may also work, except changing modes on SDR is not supported by MacLoggerDX.
 
 ## Settings
@@ -72,7 +74,12 @@ For example, if the "Radio" box has "127.0.0.1:12060", put "12060" in Cat-Relay'
 On N1MM+ side, make sure the ip address in the "Radio" box matches the computer that runs Cat-Relay. If Cat-Relay runs 
 on the same computer as N1MM+, it should be 127.0.0.1.
 
-![N1MM+ Broadcast settings](resources/N1MM-radio-info.png "N1MM+ Broadcast settings")
+![N1MM+ broadcast settings](resources/N1MM-radio-info.png "N1MM+ broadcast settings")
+
+#### QLog
+
+
+![QLog equipment settings](resources/QLog-settings.png "QLog equipment settings")
 
 ### 2. Put in the correct addresses
 
@@ -90,16 +97,19 @@ Increase this number if you notice your computer is not very responsive. It is n
 
 ## Logging
 
-Cat-Relay writes rotating log files named `cat-relay.log`. Messages are logged to this file and, when standard output is available (for example when you run from a terminal), to the console as well. If you report an issue, attaching the current `cat-relay.log` helps with diagnosis. Location of the logs is displayed on the bottom of the Settings window.
+Cat-Relay writes rotating log files named `cat-relay.log`. Messages are logged to this file and, when standard output is 
+available (for example when you run from a terminal), to the console as well. If you want to report an issue, attaching 
+the current `cat-relay.log` helps with diagnosis. Location of the logs is displayed on the bottom of the Settings window.
 
 ## Run from source code
 
-For Mac and Windows users, please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest version of Cat-Relay.
+For Mac and Windows users, please go to [Release Page](https://github.com/n2iw/cat-relay/releases) to download latest binary version of Cat-Relay.
 If you are using Linux or you prefer running source code, here are some steps you can follow.
 
 ### If you use uv
 
-The easiest way to run Cat-Relay is using [uv](https://docs.astral.sh/uv/). After installing uv, open a terminal, go to the folder that contains Cat-Relay and runn following command:
+The easiest way to run Cat-Relay is using [uv](https://docs.astral.sh/uv/). After installing uv, open a terminal, go to the folder that contains
+Cat-Relay and runn following command:
 
 `uv run src/app.py`
 
@@ -107,7 +117,8 @@ The easiest way to run Cat-Relay is using [uv](https://docs.astral.sh/uv/). Afte
 
 #### Install dependencies
 
-To install dependencies (you only need to do this once), open a terminal, go to the folder that contains Cat-Relay and run following command:
+To install dependencies (you only need to do this once), open a terminal, go to the folder that contains Cat-Relay and 
+run following command:
 
 `pip3 install -r requirements.txt`
 
