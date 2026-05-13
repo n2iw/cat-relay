@@ -25,6 +25,7 @@ jobs:
       - name: Attach archives to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
             dist/cat-relay-src.zip \
