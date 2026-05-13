@@ -25,7 +25,7 @@ class BaseClient(ABC):
         ...
 
     @abstractmethod
-    async def __aenter__(self) -> 'Client':
+    async def __aenter__(self) -> 'BaseClient':
         """
         Open the client and connect your device here.
         """

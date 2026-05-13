@@ -7,7 +7,8 @@ from clients.client_registry import client_registry
 from gui_components.dropdown import Dropdown
 from gui_components.text_input import TextInput, INTEGER
 from gui_components.seconds_input import DecimalSecondsInput, WholeSecondsInput
-from config import VALID_CAT_SOFTWARE, PLACEHOLDER_SOFTWARE, VALID_SDRS, VALID_LOCATIONS, LOCAL, NETWORK
+from config import PLACEHOLDER_SOFTWARE, VALID_LOCATIONS, LOCAL, NETWORK
+from clients.client_registry import VALID_SDRS, VALID_CAT_SOFTWARE
 from utils.log_config import LOG_DIR
 
 logger = logging.getLogger(__name__)
@@ -95,16 +96,16 @@ class Settings(QDialog):
     def sdr_software_changed(self, software):
         logger.info('Received SDR software signal: %s', software)
         self.adjust_sdr_port(software)
-        default_port = client_registry[software].default_port
+        default_port = str(client_registry[software].default_port)
         if default_port:
             self.sdr_port_widget.line.setText(default_port)
 
     @Slot(str)
     def cat_software_changed(self, software: str):
         logger.info('Received Cat software signal: %s', software)
-        default_port = client_registry[software].default_port
+        default_port = str(client_registry[software].default_port)
         if default_port:
-            self.cat_port_widget.line.setText(client_registry[software].default_port)
+            self.cat_port_widget.line.setText(default_port)
 
     def accept(self):
         if self.parent_window and hasattr(self.parent_window, "update_params"):

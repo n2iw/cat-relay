@@ -4,6 +4,8 @@ import yaml
 from PySide6.QtCore import QObject, Signal
 from pathlib import Path
 
+from clients.client_registry import SDR_PP, RUMLOG
+
 CONFIG_FILE = 'cat-relay.yml'
 
 # Labels
@@ -23,20 +25,6 @@ LOCAL = 'This computer'
 NETWORK = 'Another computer'
 VALID_LOCATIONS = [LOCAL, NETWORK]
 LOCAL_HOST = '127.0.0.1'
-
-# clients
-SDR_CONNECT = 'SDRconnect'
-SDR_PP = 'SDR++'
-DXLAB = 'DXLab'
-RUMLOG = 'RUMLogNG'
-N1MM = 'N1MM+'
-FLRIG = 'FLRIG'
-HAMLIB = 'HAMLIB'
-QLOG = 'QLog'
-
-VALID_SDRS = [SDR_CONNECT, SDR_PP]
-VALID_CAT_SOFTWARE = [DXLAB, RUMLOG, N1MM, FLRIG, QLOG]
-
 
 logger = logging.getLogger(__name__)
 

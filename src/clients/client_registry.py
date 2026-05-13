@@ -1,17 +1,23 @@
 from dataclasses import dataclass
 
 from clients.base_client import BaseClient
-from config import SDR_CONNECT, SDR_PP, N1MM, DXLAB, RUMLOG, FLRIG, QLOG
 from clients.dxlab import CommanderClient
 from clients.flrig import FlrigClient
 from clients.n1mm import N1MMClient
 from clients.sdr_connect import SdrConnectClient
 from clients.hamlib import HamlibClient
 
-NAME = 'name'
-DEFAULT_PORT = 'default_port'
-CLIENT_CLASS = 'client_class'
-FIXED_PORT = 'fixed_port'
+# client names
+SDR_CONNECT = 'SDRconnect'
+SDR_PP = 'SDR++'
+DXLAB = 'DXLab'
+RUMLOG = 'RUMLogNG'
+N1MM = 'N1MM+'
+FLRIG = 'FLRIG'
+QLOG = 'QLog'
+
+VALID_SDRS = [SDR_CONNECT, SDR_PP]
+VALID_CAT_SOFTWARE = [DXLAB, RUMLOG, N1MM, FLRIG, QLOG]
 
 @dataclass
 class Registry:

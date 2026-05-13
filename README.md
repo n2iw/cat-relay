@@ -129,3 +129,7 @@ Open a terminal, go to the folder that contains Cat-Relay, and run following com
 `python3 src/app.py`
 
 Don't close the terminal window, you can minimize it if you'd like to.
+
+## Contributing
+
+See [How to Contribute](CONTRIBUTING.md) for guidelines, especially when adding or changing SDR/CAT clients.
