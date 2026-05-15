@@ -4,7 +4,10 @@ from clients.utils.mode_mapper import ModeMapper
 from aioxmlrpc.client import ServerProxy
 
 logger = logging.getLogger(__name__)
-
+# Suppress httpx info messages
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 def _int_from_xmlrpc(v: object) -> int:
     """Coerce XML-RPC values (typed as _Marshallable) to int."""
