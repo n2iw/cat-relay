@@ -1,10 +1,7 @@
 import logging
-import asyncio
-import xmlrpc.client
 from clients.base_client import CoreMode, DataNotAvailableException, BaseClient
 from clients.utils.mode_mapper import ModeMapper
-
-from clients.utils.requests_transport import RequestsTransport
+from aioxmlrpc.client import ServerProxy
 
 logger = logging.getLogger(__name__)
 
@@ -19,16 +16,6 @@ def _int_from_xmlrpc(v: object) -> int:
     if isinstance(v, (int, float)):
         return int(v)
     raise TypeError(f"unexpected VFO type from flrig: {type(v)!r}")
-
-## The following are the valid modes that can be used on my Icom IC-7100. They may require changing for
-## your radio. Note that we use two dictionaries here: RADIO_TO_SDR converts the string we get from the
-## transceiver to the mode that the SDR can understand. SDR_TO_RADIO converts the SDR string to what the
-## radio wants.
-
-## Note that if you want to focus on voice modes, you should probably translate "USB" to "USB"
-## instead of "USB" to "USB-D" because USB-D is meant for digital decoding and may mute the rig microphone,
-## depending on how you have your USB connection set on the radio. The same is true for "LSB" and "AM" modes.
-
 
 class FlrigClient(BaseClient):
     NATIVE_TO_CORE_MODES = {
@@ -69,22 +56,18 @@ class FlrigClient(BaseClient):
         self.name = name
         self._last_mode = None
         self._last_freq = None
-        self._flrig: xmlrpc.client.ServerProxy | None = None
+        self._flrig: ServerProxy | None = None
         self._mapper = ModeMapper(self.CORE_TO_NATIVE_MODES, self.NATIVE_TO_CORE_MODES)
 
     async def __aenter__(self) -> 'FlrigClient':
-        self._flrig = await asyncio.to_thread(
-            xmlrpc.client.ServerProxy,
-            'http://{}:{}/'.format(self._ip, self._port),
-            transport=RequestsTransport(use_builtin_types=True),
-            allow_none=True)
+        self._flrig = ServerProxy(f'http://{self._ip}:{self._port}/', allow_none=True)
         if not self._flrig:
             raise Exception(f'Fail to connect to {self.name}')
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._flrig:
-            await asyncio.to_thread(self._flrig("close"))
+            self._flrig("close")
             self._flrig = None
 
     async def set_freq_mode(self, freq: int, mode: CoreMode) -> None:
@@ -93,19 +76,19 @@ class FlrigClient(BaseClient):
             return
 
         if await self.get_freq() != freq:
-            await asyncio.to_thread(self._flrig.rig.set_frequency, float(freq))
+            await self._flrig.rig.set_frequency(float(freq))
 
         native_mode = self._mapper.get_native_mode(mode)
         if native_mode not in self.NATIVE_TO_CORE_MODES.keys():
             logger.warning(f'Unmapped Core Mode: {mode}')
             return
         if await self.get_mode() != mode:
-            self._flrig.rig.set_mode(native_mode)
+            await self._flrig.rig.set_mode(native_mode)
 
     async def get_freq(self) -> int:
         if not self._flrig:
             raise Exception(f'{self.name} is not connected')
-        raw = await asyncio.to_thread(self._flrig.rig.get_vfo)
+        raw = await self._flrig.rig.get_vfo()
         if raw is None:
             raise DataNotAvailableException(f'Failed to get frequency from {self.name}')
         freq = _int_from_xmlrpc(raw)
@@ -114,7 +97,7 @@ class FlrigClient(BaseClient):
     async def get_mode(self) -> CoreMode:
         if not self._flrig:
             raise Exception(f'{self.name} is not connected')
-        raw = await asyncio.to_thread(self._flrig.rig.get_mode)
+        raw = await self._flrig.rig.get_mode()
         if raw is None:
             raise DataNotAvailableException(f'Failed to get mode from {self.name}')
         native_mode = str(raw)
