@@ -45,7 +45,6 @@ class Parameters(QObject):
                  cat_software=RUMLOG,
                  cat_ip=LOCAL_HOST,
                  cat_port=5555,
-                 radio_info_port=13063,
                  reconnect_time=10,
                  sync_interval=0.1
                  ):
@@ -58,7 +57,6 @@ class Parameters(QObject):
         self.cat_software = cat_software
         self.cat_ip = cat_ip
         self.cat_port = cat_port
-        self.radio_info_port = radio_info_port
         self.reconnect_time = reconnect_time
         self.sync_interval = sync_interval
 
@@ -72,7 +70,6 @@ class Parameters(QObject):
             self.cat_software,
             self.cat_ip,
             self.cat_port,
-            self.radio_info_port,
             self.reconnect_time,
             self.sync_interval
         )
@@ -108,9 +105,6 @@ class Parameters(QObject):
 
     def set_cat_port(self, port):
         self.cat_port = port
-
-    def set_radio_info_port(self, port):
-        self.radio_info_port = port
 
     def set_reconnect_time(self, seconds):
         self.reconnect_time = seconds

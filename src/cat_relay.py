@@ -77,7 +77,6 @@ class CatRelay(QObject):
         self.cat_software = params.cat_software
         self.cat_ip = params.cat_ip
         self.cat_port = params.cat_port
-        self.radio_info_port = params.radio_info_port
         self.sdr_software = params.sdr_software
         self.sdr_location = params.sdr_location
         self.sdr_ip = params.sdr_ip
