@@ -8,7 +8,6 @@ dependencies = [
     "pyside6~=6.11.0",
     "platformdirs>=4,<5",
     "pyyaml>=6.0.2",
-    "requests>=2.32.3",
     "websockets>=16.0",
     "aioxmlrpc>=0.10.0",
 ]
