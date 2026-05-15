@@ -1,9 +1,9 @@
 name: Build Nightly Release
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
+  schedule:
+    # 05:00 UTC — adjust if you want a different "nightly" window
+    - cron: "0 5 * * *"
 
 permissions:
   contents: write
@@ -13,7 +13,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  should-build:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Decide whether to run build
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          CURRENT=$(git rev-parse HEAD | tr "[:upper:]" "[:lower:]")
+
+          if ! gh release view nightly --repo "${{ github.repository }}" --json targetCommitish > /tmp/nightly.json 2>/dev/null; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "No nightly release yet; running build."
+            exit 0
+          fi
+
+          TARGET=$(jq -r .targetCommitish /tmp/nightly.json | tr "[:upper:]" "[:lower:]")
+          if [ -z "$TARGET" ] || [ "$TARGET" = "null" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "Nightly release has no target; running build."
+            exit 0
+          fi
+
+          if [ "$CURRENT" = "$TARGET" ]; then
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "Nightly already points at ${CURRENT}; skipping build."
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "Changes since nightly (nightly=${TARGET}, HEAD=${CURRENT}); running build."
+          fi
+
   build-zips:
+    needs: should-build
+    if: needs.should-build.outputs.build == 'true'
     uses: ./.github/workflows/build-zips.yaml
 
   publish-nightly-release:
