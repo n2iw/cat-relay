@@ -19,7 +19,7 @@ jobs:
       build: ${{ steps.check.outputs.build }}
     steps:
       - name: Check out default branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
       - name: Decide whether to run build
@@ -61,7 +61,7 @@ jobs:
     needs: build-zips
     steps:
       - name: Download built archives
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: dist
           pattern: cat-relay-*

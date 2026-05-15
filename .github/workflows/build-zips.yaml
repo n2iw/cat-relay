@@ -12,7 +12,7 @@ jobs:
       - name: Print ref and SHA
         run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Pack source code
@@ -20,7 +20,7 @@ jobs:
           mkdir -p dist
           zip -r dist/cat-relay-src.zip .
       - name: Upload source code archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cat-relay-src
           path: dist/cat-relay-src.zip
@@ -31,11 +31,11 @@ jobs:
       - name: Print ref and SHA
         run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install dependencies
@@ -54,7 +54,7 @@ jobs:
           zip -r ../cat-relay-mac-arm.zip CatRelay.app
         shell: bash
       - name: Upload macOS app - Apple Silicon
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cat-relay-mac-arm
           path: dist/cat-relay-mac-arm.zip
@@ -65,11 +65,11 @@ jobs:
       - name: Print ref and SHA
         run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install dependencies
@@ -86,7 +86,7 @@ jobs:
           zip -r ../cat-relay-mac-x64.zip CatRelay.app
         shell: bash
       - name: Upload macOS app - Intel
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cat-relay-mac-x64
           path: dist/cat-relay-mac-x64.zip
@@ -97,11 +97,11 @@ jobs:
       - name: Print ref and SHA
         run: echo "REF=${{ github.ref_name }} SHA=${{ github.sha }}"
       - name: Check out the branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install dependencies
@@ -117,7 +117,7 @@ jobs:
           cd dist/windows
           Compress-Archive -Path .\* -DestinationPath ../cat-relay-win.zip
       - name: Upload Windows App
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cat-relay-win
           path: dist/cat-relay-win.zip
